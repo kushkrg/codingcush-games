@@ -166,6 +166,7 @@ switch ($action) {
             $db->prepare("DELETE FROM $table WHERE user_id = ?")->execute([$userId]);
         }
         $db->prepare('DELETE FROM games_users WHERE id = ?')->execute([$userId]);
+        forget_board_cache('vyomastra');
         reply(200, ['ok' => true]);
 
     case 'me':
@@ -241,11 +242,23 @@ switch ($action) {
         $limit = max(1, min(50, (int) ($_GET['limit'] ?? 20)));
         // Photos are only sent when asked for (the game asks; the website's small board does not).
         $photos = ($_GET['photos'] ?? '') === '1';
+        // Everyone asking for the same board within a few seconds gets the same ready-made answer.
+        $kept = board_cache_file($game, $level, $limit, $photos);
+        if (is_file($kept) && time() - (int) filemtime($kept) < BOARD_CACHE_SECONDS) {
+            $ready = @file_get_contents($kept);
+            if ($ready !== false && $ready !== '') {
+                echo $ready;
+                exit;
+            }
+        }
         $query = $db->prepare("SELECT s.name, s.ship, s.score, u.username, u.photo FROM games_scores s LEFT JOIN games_users u ON u.id = s.user_id WHERE s.game = ? AND s.level = ? ORDER BY s.score DESC, s.updated_at ASC LIMIT $limit");
         $query->execute([$game, $level]);
         $rows = array_map(fn(array $row): array => ['name' => $row['name'], 'username' => (string) $row['username'], 'ship' => $row['ship'], 'score' => (int) $row['score']]
             + ($photos ? ['photo' => (string) $row['photo']] : []), $query->fetchAll());
-        reply(200, ['scores' => $rows]);
+        $answer = json_encode(['scores' => $rows], JSON_UNESCAPED_UNICODE);
+        @file_put_contents($kept, $answer, LOCK_EX);
+        echo $answer;
+        exit;
 
     case 'run_start':
         // Called when a mission begins. The token it returns must come back with the score,
@@ -308,6 +321,9 @@ switch ($action) {
             $best = (int) $row['score'];
         }
         $db->commit();
+        if ($best === $score) {
+            forget_board_cache($game, $level);   # a new best: the board must show it straight away
+        }
         reply(200, ['best' => $best]);
 
     case 'event':
@@ -360,12 +376,14 @@ switch ($action) {
             $gone = $db->prepare('DELETE FROM games_scores WHERE user_id = ?');
             $gone->execute([(int) $player['id']]);
         }
+        forget_board_cache('vyomastra');
         reply(200, ['removed' => $gone->rowCount()]);
 
     case 'admin_photo_clear':
         require_admin($db);
         $player = user_by_username($db, body()['username'] ?? '');
         $db->prepare('UPDATE games_users SET photo = NULL WHERE id = ?')->execute([(int) $player['id']]);
+        forget_board_cache('vyomastra');
         reply(200, ['ok' => true]);
 
     case 'admin_ban':
@@ -382,6 +400,7 @@ switch ($action) {
             $db->prepare('DELETE FROM games_scores WHERE user_id = ?')->execute([(int) $player['id']]);
             $db->prepare('UPDATE games_users SET photo = NULL WHERE id = ?')->execute([(int) $player['id']]);
         }
+        forget_board_cache('vyomastra');
         reply(200, ['banned' => $banned === 1]);
 
     case 'providers':

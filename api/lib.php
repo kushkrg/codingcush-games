@@ -151,6 +151,28 @@ function maybe_backup(PDO $db, string $folder): void
     }
 }
 
+const BOARD_CACHE_SECONDS = 30;
+
+/** Where finished leaderboard answers are kept for a few seconds, so a busy board is not rebuilt for every visitor. */
+function board_cache_file(string $game, int $level, int $limit, bool $photos): string
+{
+    $folder = data_folder() . '/cache';
+    if (!is_dir($folder)) {
+        @mkdir($folder, 0700, true);
+        @file_put_contents($folder . '/.htaccess', "Require all denied\n");
+    }
+    return sprintf('%s/board-%s-%d-%d-%d.json', $folder, $game, $level, $limit, $photos ? 1 : 0);
+}
+
+/** Throws away kept leaderboard answers for a game (one level, or every level with 0) after a score changes. */
+function forget_board_cache(string $game, int $level = 0): void
+{
+    $pattern = sprintf('%s/cache/board-%s-%s-*.json', data_folder(), $game, $level > 0 ? (string) $level : '*');
+    foreach (glob($pattern) ?: [] as $file) {
+        @unlink($file);
+    }
+}
+
 /** Adds one to a named counter for today. Unknown names and odd details are dropped. */
 function count_event(PDO $db, string $game, string $name, int $level, string $detail): void
 {
