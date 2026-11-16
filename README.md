@@ -11,7 +11,7 @@ Source of [games.codingcush.com](https://games.codingcush.com): free browser gam
 
 ## Deploy
 
-Hostinger pulls the `main` branch into the subdomain's folder, so a push to `main` goes live.
+A GitHub Action (`.github/workflows/deploy.yml`) uploads the site to Hostinger over FTPS on every push to `main`. It needs the `FTP_SERVER`, `FTP_USERNAME` and `FTP_PASSWORD` repository secrets; until they are set it uploads nothing.
 
 ## First-time server setup
 
