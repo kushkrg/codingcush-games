@@ -1,8 +1,17 @@
 # games.codingcush.com
 RewriteEngine On
 
-# One address only: anything that reaches this folder another way
+# The test copy of the site (staging-games.codingcush.com) is served as it is, over
+# https, and marked so that search engines leave it alone.
+RewriteCond %{HTTP_HOST} ^staging-games\.codingcush\.com$ [NC]
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://staging-games.codingcush.com/$1 [R=302,L]
+RewriteCond %{HTTP_HOST} ^staging-games\.codingcush\.com$ [NC]
+RewriteRule .* - [E=STAGING:1]
+
+# One address only for the real site: anything that reaches this folder another way
 # (http, or codingcush.com/games/...) goes to https://games.codingcush.com/
+RewriteCond %{HTTP_HOST} !^staging-games\.codingcush\.com$ [NC]
 RewriteCond %{HTTPS} !=on [OR]
 RewriteCond %{HTTP_HOST} !^games\.codingcush\.com$ [NC]
 RewriteRule ^(.*)$ https://games.codingcush.com/$1 [R=301,L]
@@ -21,6 +30,7 @@ AddType application/manifest+json .webmanifest
 
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
+  Header set X-Robots-Tag "noindex, nofollow" env=STAGING
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   # Pictures change rarely; pages and game files are replaced in place, so always re-check them.
   <FilesMatch "\.(webp|jpg|png)$">

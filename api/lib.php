@@ -37,7 +37,11 @@ function site_config(): array
 /** Private folder for the SQLite file: outside the web folder when the server allows it. */
 function data_folder(): string
 {
-    $folder = dirname(__DIR__, 3) . '/games-data';
+    // The real site (in .../public_html/games) keeps its data in games-data. Any other copy,
+    // such as the staging site in games-staging, gets a folder of its own (games-staging-data),
+    // so testing can never touch real players' accounts.
+    $site = basename(dirname(__DIR__));
+    $folder = dirname(__DIR__, 3) . '/' . ($site === 'games' ? 'games' : $site) . '-data';
     if (!is_dir($folder) && !@mkdir($folder, 0700, true)) {
         $folder = __DIR__ . '/data';
         if (!is_dir($folder)) {
