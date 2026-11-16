@@ -6,7 +6,7 @@
 declare(strict_types=1);
 
 const SESSION_DAYS = 90;
-const MAX_SAVE_BYTES = 20000;
+const MAX_SAVE_BYTES = 60000;
 const MAX_ATTEMPTS = 8;          // failed sign-ins allowed per address per 15 minutes
 const GAMES = [
     // game id => highest level and the largest score a level can plausibly give
