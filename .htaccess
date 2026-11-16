@@ -20,6 +20,7 @@ ErrorDocument 404 /404.html
 Options -Indexes
 
 AddType application/wasm .wasm
+AddType application/manifest+json .webmanifest
 AddType image/webp .webp
 AddType text/plain .txt
 AddType application/manifest+json .webmanifest
@@ -36,7 +37,7 @@ AddType application/manifest+json .webmanifest
   <FilesMatch "\.(webp|jpg|png)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
-  <FilesMatch "\.(html|js|wasm|pck|xml|txt)$">
+  <FilesMatch "\.(html|js|wasm|pck|xml|txt|webmanifest)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>
