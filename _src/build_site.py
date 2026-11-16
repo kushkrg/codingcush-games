@@ -166,7 +166,7 @@ home_body = f"""
       <div class="body">
         <h3>Vyomastra</h3>
         <p>A space shooter with five weapons, boss fights, three ships to unlock and paint jobs to buy.</p>
-        <ul class="chips"><li>Shooter</li><li>Touch · Keyboard · Gamepad</li><li>Leaderboard</li></ul>
+        <ul class="chips"><li>Shooter</li><li>Touch · Mouse · Keyboard · Gamepad</li><li>Leaderboard</li></ul>
       </div>
     </a>
     <div class="card soon"><div><h3>More games on the way</h3><p>New games appear here as they are finished.</p></div></div>
@@ -208,7 +208,7 @@ home_schema = [
 GAME_FAQ = [
     ("What is Vyomastra?", "Vyomastra is a free vertical space shooter that runs in the browser. You fly a fighter up the screen, shoot waves of enemy ships, collect weapon pick-ups, coins and diamonds, and fight a boss at the end of the level."),
     ("Is Vyomastra free?", "Yes. Vyomastra is free to play and has no purchases with real money. Coins and diamonds are earned only by playing."),
-    ("How do I play Vyomastra?", "On a phone, drag a finger to move and the ship fires by itself. On a computer, move with the arrow keys or W A S D, hold Space or J to fire, and press Esc or P to pause. A gamepad also works: left stick or D-pad to move and the A button to fire."),
+    ("How do I play Vyomastra?", "On a phone, drag a finger to move and the ship fires by itself. On a computer, move the mouse and the ship follows it, and hold the left button to fire; or move with the arrow keys or W A S D, hold Space or J to fire, and press Esc or P to pause. A gamepad also works: left stick or D-pad to move and the A button to fire."),
     ("How do I save my progress in Vyomastra?", "Progress saves automatically in your browser. To keep it online and use it on another device, open Account in the game menu and create a free account with an email and password."),
     ("How do I unlock new ships in Vyomastra?", "Open Hangar in the game menu. Bulwark costs 1,200 coins and Wisp costs 20 diamonds. Coins drop from every enemy you destroy; diamonds come from bosses and from clearing a level for the first time."),
     ("Can I play Vyomastra on a phone?", "Yes. On a phone or tablet, drag a finger anywhere on the screen to move the ship; it fires automatically while your finger is down. Tap the pause button at the top to pause."),
@@ -236,12 +236,12 @@ game_body = f"""
   <h2 id="how-h">How to play Vyomastra</h2>
   <div class="scroll"><table>
     <caption>Controls</caption>
-    <thead><tr><th scope="col">Action</th><th scope="col">Touch</th><th scope="col">Keyboard</th><th scope="col">Gamepad</th></tr></thead>
+    <thead><tr><th scope="col">Action</th><th scope="col">Touch</th><th scope="col">Mouse</th><th scope="col">Keyboard</th><th scope="col">Gamepad</th></tr></thead>
     <tbody>
-      <tr><th scope="row">Move</th><td>Drag a finger</td><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Left stick or D-pad</td></tr>
-      <tr><th scope="row">Fire</th><td>Automatic while touching</td><td>Hold <kbd>Space</kbd> or <kbd>J</kbd></td><td>A button</td></tr>
-      <tr><th scope="row">Pause</th><td>Pause button</td><td><kbd>Esc</kbd> or <kbd>P</kbd></td><td>Start</td></tr>
-      <tr><th scope="row">Fullscreen</th><td>—</td><td><kbd>F11</kbd> in the browser</td><td>—</td></tr>
+      <tr><th scope="row">Move</th><td>Drag a finger</td><td>Move the mouse</td><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Left stick or D-pad</td></tr>
+      <tr><th scope="row">Fire</th><td>Automatic while touching</td><td>Hold left button</td><td>Hold <kbd>Space</kbd> or <kbd>J</kbd></td><td>A button</td></tr>
+      <tr><th scope="row">Pause</th><td>Pause button</td><td>Pause button</td><td><kbd>Esc</kbd> or <kbd>P</kbd></td><td>Start</td></tr>
+      <tr><th scope="row">Fullscreen</th><td>—</td><td>—</td><td><kbd>F11</kbd> in the browser</td><td>—</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -320,13 +320,13 @@ urls = ["/", "/vyomastra/"]
 
 ## Games
 
-- [Vyomastra]({SITE}/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
+- [Vyomastra]({SITE}/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
 
 ## Facts
 
 - Price: free. Coins and diamonds are earned only by playing.
 - Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
-- Controls (Vyomastra): on touch screens drag to move (fires automatically); arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
+- Controls (Vyomastra): on touch screens drag to move (fires automatically); with a mouse the ship follows the cursor and the left button fires; arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
 - Accounts: optional, email and password, created inside each game under Account.
 - Publisher: CodingCush, https://codingcush.com/
 """)

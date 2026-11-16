@@ -4,12 +4,12 @@
 
 ## Games
 
-- [Vyomastra](https://games.codingcush.com/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
+- [Vyomastra](https://games.codingcush.com/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
 
 ## Facts
 
 - Price: free. Coins and diamonds are earned only by playing.
 - Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
-- Controls (Vyomastra): on touch screens drag to move (fires automatically); arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
+- Controls (Vyomastra): on touch screens drag to move (fires automatically); with a mouse the ship follows the cursor and the left button fires; arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
 - Accounts: optional, email and password, created inside each game under Account.
 - Publisher: CodingCush, https://codingcush.com/

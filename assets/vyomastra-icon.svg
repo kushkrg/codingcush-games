@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="18%" r="95%">
+      <stop offset="0" stop-color="#27409a"/>
+      <stop offset="0.55" stop-color="#101a4a"/>
+      <stop offset="1" stop-color="#060a1c"/>
+    </radialGradient>
+    <linearGradient id="left" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#7fe3ff"/>
+    </linearGradient>
+    <linearGradient id="right" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fe9ff"/>
+      <stop offset="1" stop-color="#2d8fe0"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3b0"/>
+      <stop offset="0.5" stop-color="#ffc233"/>
+      <stop offset="1" stop-color="#ff7a1a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#6fd8ff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6fd8ff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <!-- horizon of a planet: "vyom" is the sky -->
+    <circle cx="256" cy="830" r="420" fill="#0b1640"/>
+    <circle cx="256" cy="830" r="420" fill="none" stroke="#6fd8ff" stroke-width="7" opacity="0.9"/>
+    <circle cx="256" cy="830" r="432" fill="none" stroke="#6fd8ff" stroke-width="16" opacity="0.18"/>
+    <!-- stars -->
+    <g fill="#ffffff">
+      <circle cx="96" cy="118" r="7"/><circle cx="420" cy="92" r="5"/><circle cx="438" cy="250" r="6" opacity="0.8"/><circle cx="78" cy="286" r="4" opacity="0.7"/>
+    </g>
+    <circle cx="256" cy="250" r="210" fill="url(#glow)"/>
+    <!-- the "astra": a flame that is also an arrow shaft -->
+    <path d="M256 300 L296 352 L256 452 L216 352 Z" fill="url(#flame)"/>
+    <!-- the ship: an upward arrowhead in two facets, which reads as an inverted V -->
+    <path d="M256 70 L256 316 L112 388 Z" fill="url(#left)"/>
+    <path d="M256 70 L400 388 L256 316 Z" fill="url(#right)"/>
+  </g>
+</svg>
