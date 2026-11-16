@@ -11,13 +11,11 @@ Source of [games.codingcush.com](https://games.codingcush.com): free browser gam
 
 ## Deploy
 
-A GitHub Action (`.github/workflows/deploy.yml`) uploads the site to Hostinger over FTPS on every push to `main`. It needs the `FTP_SERVER`, `FTP_USERNAME` and `FTP_PASSWORD` repository secrets; until they are set it uploads nothing.
+Hostinger's Git deployment pulls the `main` branch into `public_html/games`, so a push to `main` goes live.
 
-## First-time server setup
+## Database
 
-1. Create a MySQL database and user in hPanel.
-2. Run `api/schema.sql` in phpMyAdmin.
-3. Copy `api/config.sample.php` to `api/config.php` on the server and fill in the database name, user and password. `config.php` is ignored by git and blocked from the web.
+Nothing to set up: with no `api/config.php` the API keeps accounts, saves and scores in one SQLite file, stored outside the web folder (`games-data/games.sqlite` beside `public_html`). To move to MySQL later, run `api/schema.sql` in phpMyAdmin and create `api/config.php` from `api/config.sample.php`; that file is ignored by git and blocked from the web.
 
 ## Editing pages or adding a game
 

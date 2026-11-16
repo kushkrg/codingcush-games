@@ -43,16 +43,47 @@ set_exception_handler(function (Throwable $error): void {
     fail(500, 'Server error. Please try again.');
 });
 
-$configFile = __DIR__ . '/config.php';
-if (!is_file($configFile)) {
-    fail(500, 'The games API is not set up yet (config.php is missing).');
+/**
+ * Opens the database. With no config.php the API keeps everything in one SQLite file
+ * that needs no password: outside the web folder when the server allows it, otherwise
+ * in api/data/, which is closed to the web. A config.php (see config.sample.php)
+ * switches to MySQL.
+ */
+function open_database(): PDO
+{
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ];
+    $configFile = __DIR__ . '/config.php';
+    if (is_file($configFile)) {
+        $config = require $configFile;
+        return new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, $options);
+    }
+    $folder = dirname(__DIR__, 3) . '/games-data';
+    if (!is_dir($folder) && !@mkdir($folder, 0700, true)) {
+        $folder = __DIR__ . '/data';
+        if (!is_dir($folder)) {
+            mkdir($folder, 0700, true);
+        }
+        if (!is_file($folder . '/.htaccess')) {
+            file_put_contents($folder . '/.htaccess', "Require all denied\n");
+        }
+    }
+    $db = new PDO('sqlite:' . $folder . '/games.sqlite', null, null, $options);
+    $db->exec('PRAGMA journal_mode = WAL');
+    $db->exec('PRAGMA busy_timeout = 4000');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, pass_hash TEXT NOT NULL, name TEXT NOT NULL DEFAULT \'PILOT\', created_at INTEGER NOT NULL)');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_sessions (token_hash TEXT NOT NULL PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_saves (user_id INTEGER NOT NULL, game TEXT NOT NULL, data TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, game))');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_scores (user_id INTEGER NOT NULL, game TEXT NOT NULL, level INTEGER NOT NULL, name TEXT NOT NULL, ship TEXT NOT NULL DEFAULT \'\', score INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, game, level))');
+    $db->exec('CREATE INDEX IF NOT EXISTS games_scores_board ON games_scores (game, level, score)');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL, made_at INTEGER NOT NULL)');
+    return $db;
 }
-$config = require $configFile;
-$db = new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-]);
+
+$db = open_database();
 
 function body(): array
 {
