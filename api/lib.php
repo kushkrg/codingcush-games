@@ -9,9 +9,19 @@ const SESSION_DAYS = 90;
 const MAX_SAVE_BYTES = 60000;
 const MAX_ATTEMPTS = 8;          // failed sign-ins allowed per address per 15 minutes
 const GAMES = [
-    // game id => highest level and the largest score a level can plausibly give
-    'vyomastra' => ['levels' => 8, 'max_score' => 400000],
+    // game id => highest level, the largest score each level can plausibly give (about
+    // four times what a clean run earns), and the shortest time a scoring run can take.
+    'vyomastra' => [
+        'levels' => 8,
+        'max_scores' => [1 => 40000, 2 => 50000, 3 => 100000, 4 => 90000, 5 => 130000, 6 => 110000, 7 => 150000, 8 => 200000],
+        'min_seconds' => 30,
+    ],
 ];
+const RUN_HOURS = 6;             // a run token is good for this long
+const BACKUP_KEEP = 14;          // daily database copies kept
+const EVENT_NAMES = ['session', 'signin', 'level_start', 'level_complete', 'level_fail', 'continue_used'];
+const MAX_EVENT_ROWS_PER_DAY = 2000;
+const MAX_ERROR_ROWS_PER_DAY = 200;
 
 /** Optional settings from config.php (see config.sample.php); empty when the file is absent. */
 function site_config(): array
@@ -71,6 +81,7 @@ function open_database(): PDO
         $db = new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, $options);
         add_usernames($db);
         add_photos($db);
+        add_later_tables($db);
         return $db;
     }
     $folder = data_folder();
@@ -85,7 +96,113 @@ function open_database(): PDO
     $db->exec('CREATE TABLE IF NOT EXISTS games_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL, made_at INTEGER NOT NULL)');
     add_usernames($db);
     add_photos($db);
+    add_later_tables($db);
+    maybe_backup($db, $folder);
     return $db;
+}
+
+/**
+ * Tables and columns added after launch. Written so the same statements work on
+ * SQLite and MySQL, and so running them again does nothing.
+ */
+function add_later_tables(PDO $db): void
+{
+    $db->exec('CREATE TABLE IF NOT EXISTS games_runs (token_hash CHAR(64) NOT NULL PRIMARY KEY, user_id INTEGER NOT NULL, game VARCHAR(32) NOT NULL, level INTEGER NOT NULL, started_at INTEGER NOT NULL)');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_events (day CHAR(10) NOT NULL, game VARCHAR(32) NOT NULL, name VARCHAR(32) NOT NULL, level INTEGER NOT NULL, detail VARCHAR(16) NOT NULL, total INTEGER NOT NULL, PRIMARY KEY (day, game, name, level, detail))');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_errors (day CHAR(10) NOT NULL, hash CHAR(40) NOT NULL, message TEXT NOT NULL, place VARCHAR(160) NOT NULL, version VARCHAR(16) NOT NULL, total INTEGER NOT NULL, last_at INTEGER NOT NULL, PRIMARY KEY (day, hash))');
+    try {
+        $db->query('SELECT banned FROM games_users LIMIT 1');
+    } catch (PDOException $missing) {
+        $db->exec('ALTER TABLE games_users ADD COLUMN banned INTEGER NOT NULL DEFAULT 0');
+    }
+}
+
+/**
+ * Once a day, the first request copies the whole database into backups/ next to it
+ * and throws away copies older than BACKUP_KEEP days. SQLite only: a MySQL database
+ * is backed up by the host.
+ */
+function maybe_backup(PDO $db, string $folder): void
+{
+    $backups = $folder . '/backups';
+    $marker = $backups . '/last-backup.txt';
+    if (is_file($marker) && time() - (int) filemtime($marker) < 86400) {
+        return;
+    }
+    if (!is_dir($backups) && !@mkdir($backups, 0700, true)) {
+        return;
+    }
+    if (!is_file($backups . '/.htaccess')) {
+        @file_put_contents($backups . '/.htaccess', "Require all denied\n");
+    }
+    @touch($marker);   // first, so two requests at the same moment do not both copy
+    $target = $backups . '/games-' . gmdate('Y-m-d') . '.sqlite';
+    if (!is_file($target)) {
+        try {
+            $db->exec('VACUUM INTO ' . $db->quote($target));   // a clean, consistent copy
+        } catch (PDOException $old) {
+            @copy($folder . '/games.sqlite', $target);          // very old SQLite: plain copy
+        }
+    }
+    $copies = glob($backups . '/games-*.sqlite') ?: [];
+    sort($copies);
+    foreach (array_slice($copies, 0, max(count($copies) - BACKUP_KEEP, 0)) as $stale) {
+        @unlink($stale);
+    }
+}
+
+/** Adds one to a named counter for today. Unknown names and odd details are dropped. */
+function count_event(PDO $db, string $game, string $name, int $level, string $detail): void
+{
+    if (!in_array($name, EVENT_NAMES, true) || !preg_match('/^[a-z0-9_]{0,16}$/', $detail) || $level < 0 || $level > 99) {
+        return;
+    }
+    $day = gmdate('Y-m-d');
+    $key = [$day, $game, $name, $level, $detail];
+    $bump = $db->prepare('UPDATE games_events SET total = total + 1 WHERE day = ? AND game = ? AND name = ? AND level = ? AND detail = ?');
+    $bump->execute($key);
+    if ($bump->rowCount() > 0) {
+        return;
+    }
+    $rows = $db->prepare('SELECT COUNT(*) FROM games_events WHERE day = ?');
+    $rows->execute([$day]);
+    if ((int) $rows->fetchColumn() >= MAX_EVENT_ROWS_PER_DAY) {
+        return;
+    }
+    try {
+        $db->prepare('INSERT INTO games_events (day, game, name, level, detail, total) VALUES (?, ?, ?, ?, ?, 1)')->execute($key);
+    } catch (PDOException $race) {
+        $bump->execute($key);   // someone else added the row in between
+    }
+}
+
+/** Records an error reported by a player's browser; the same error on the same day is counted, not repeated. */
+function count_error(PDO $db, string $message, string $place, string $version): void
+{
+    $message = substr(trim($message), 0, 400);
+    $place = substr(trim($place), 0, 160);
+    $version = substr(preg_replace('/[^0-9A-Za-z.\-]/', '', $version) ?? '', 0, 16);
+    if ($message === '') {
+        return;
+    }
+    $day = gmdate('Y-m-d');
+    $hash = sha1($message . '|' . $place);
+    $bump = $db->prepare('UPDATE games_errors SET total = total + 1, last_at = ? WHERE day = ? AND hash = ?');
+    $bump->execute([time(), $day, $hash]);
+    if ($bump->rowCount() > 0) {
+        return;
+    }
+    $rows = $db->prepare('SELECT COUNT(*) FROM games_errors WHERE day = ?');
+    $rows->execute([$day]);
+    if ((int) $rows->fetchColumn() >= MAX_ERROR_ROWS_PER_DAY) {
+        return;
+    }
+    try {
+        $db->prepare('INSERT INTO games_errors (day, hash, message, place, version, total, last_at) VALUES (?, ?, ?, ?, ?, 1, ?)')
+            ->execute([$day, $hash, $message, $place, $version, time()]);
+    } catch (PDOException $race) {
+        $bump->execute([time(), $day, $hash]);
+    }
 }
 
 /**

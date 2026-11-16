@@ -135,7 +135,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":20627544,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":20629096,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -259,6 +259,29 @@ const engine = new Engine(GODOT_CONFIG);
 		requestAnimationFrame(sync);
 	}
 	sync();
+})();
+// Reports errors to the site so they can be fixed: the message and where it happened,
+// nothing about the player. At most five a visit.
+(function () {
+	var sent = 0, version = '1.9.0';
+	function report(message, place) {
+		if (sent >= 5 || !message) { return; }
+		sent += 1;
+		try {
+			var body = JSON.stringify({ message: String(message).slice(0, 400), place: String(place || '').slice(0, 160), version: version });
+			if (navigator.sendBeacon) { navigator.sendBeacon('/api/index.php?action=client_error', new Blob([body], { type: 'text/plain' })); }
+			else { fetch('/api/index.php?action=client_error', { method: 'POST', body: body, keepalive: true }); }
+		} catch (e) { /* reporting must never break the game */ }
+	}
+	window.addEventListener('error', function (e) { report(e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || 0)); });
+	window.addEventListener('unhandledrejection', function (e) { report('Unhandled promise: ' + (e.reason && e.reason.message || e.reason), 'promise'); });
+	// Godot prints its own script errors to the console rather than throwing them.
+	var original = console.error;
+	console.error = function () {
+		var text = Array.prototype.join.call(arguments, ' ');
+		if (/SCRIPT ERROR|USER ERROR|ERROR:/.test(text)) { report(text, 'godot'); }
+		return original.apply(console, arguments);
+	};
 })();
 		</script>
 

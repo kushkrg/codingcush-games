@@ -47,6 +47,37 @@ function body(): array
     return is_array($data) ? $data : [];
 }
 
+/** The signed-in player, who must also be an admin. */
+function require_admin(PDO $db): int
+{
+    $userId = require_user($db);
+    $query = $db->prepare('SELECT username FROM games_users WHERE id = ?');
+    $query->execute([$userId]);
+    if (!is_admin((string) $query->fetchColumn())) {
+        fail(403, 'Admins only.');
+    }
+    return $userId;
+}
+
+/** Looks a player up by username for an admin action. */
+function user_by_username(PDO $db, mixed $username): array
+{
+    $query = $db->prepare('SELECT id, username, email, name, banned FROM games_users WHERE username = ?');
+    $query->execute([strtolower(trim((string) $username))]);
+    $row = $query->fetch();
+    if (!$row) {
+        fail(404, 'No player has that username.');
+    }
+    return $row;
+}
+
+function is_banned(PDO $db, int $userId): bool
+{
+    $query = $db->prepare('SELECT banned FROM games_users WHERE id = ?');
+    $query->execute([$userId]);
+    return (int) $query->fetchColumn() === 1;
+}
+
 function game_id(mixed $value): string
 {
     $game = (string) $value;
@@ -131,7 +162,7 @@ switch ($action) {
 
     case 'account_delete':
         $userId = require_user($db);
-        foreach (['games_sessions', 'games_saves', 'games_scores'] as $table) {
+        foreach (['games_sessions', 'games_saves', 'games_scores', 'games_runs'] as $table) {
             $db->prepare("DELETE FROM $table WHERE user_id = ?")->execute([$userId]);
         }
         $db->prepare('DELETE FROM games_users WHERE id = ?')->execute([$userId]);
@@ -187,7 +218,7 @@ switch ($action) {
         if ($data === false || strlen($data) > MAX_SAVE_BYTES) {
             fail(413, 'The save is too large.');
         }
-        store_photo($db, $userId, $in['save']['photo'] ?? '');
+        store_photo($db, $userId, is_banned($db, $userId) ? '' : ($in['save']['photo'] ?? ''));
         $db->beginTransaction();
         $query = $db->prepare('SELECT user_id FROM games_saves WHERE user_id = ? AND game = ?');
         $query->execute([$userId, $game]);
@@ -216,6 +247,23 @@ switch ($action) {
             + ($photos ? ['photo' => (string) $row['photo']] : []), $query->fetchAll());
         reply(200, ['scores' => $rows]);
 
+    case 'run_start':
+        // Called when a mission begins. The token it returns must come back with the score,
+        // and not too soon: a score cannot be posted without a run having been played.
+        $userId = require_user($db);
+        $in = body();
+        $game = game_id($in['game'] ?? '');
+        $level = (int) ($in['level'] ?? 0);
+        if ($level < 1 || $level > GAMES[$game]['levels']) {
+            fail(400, 'Unknown level.');
+        }
+        $db->prepare('DELETE FROM games_runs WHERE started_at < ? OR (user_id = ? AND game = ? AND level = ?)')
+            ->execute([time() - RUN_HOURS * 3600, $userId, $game, $level]);
+        $run = bin2hex(random_bytes(32));
+        $db->prepare('INSERT INTO games_runs (token_hash, user_id, game, level, started_at) VALUES (?, ?, ?, ?, ?)')
+            ->execute([hash('sha256', $run), $userId, $game, $level, time()]);
+        reply(200, ['run' => $run]);
+
     case 'score_put':
         $userId = require_user($db);
         $in = body();
@@ -225,9 +273,24 @@ switch ($action) {
         if ($level < 1 || $level > GAMES[$game]['levels']) {
             fail(400, 'Unknown level.');
         }
-        if ($score < 1 || $score > GAMES[$game]['max_score']) {
+        if ($score < 1 || $score > GAMES[$game]['max_scores'][$level]) {
             fail(400, 'That score is not possible.');
         }
+        if (is_banned($db, $userId)) {
+            fail(403, 'This account cannot post scores.');
+        }
+        $run = (string) ($in['run'] ?? '');
+        $query = $db->prepare('SELECT started_at FROM games_runs WHERE token_hash = ? AND user_id = ? AND game = ? AND level = ?');
+        $query->execute([hash('sha256', $run), $userId, $game, $level]);
+        $started = $query->fetch();
+        if (!preg_match('/^[a-f0-9]{64}$/', $run) || !$started) {
+            fail(400, 'This score does not belong to a run. Reload the game and play again.');
+        }
+        if (time() - (int) $started['started_at'] < GAMES[$game]['min_seconds']) {
+            fail(400, 'That run was too short to count.');
+        }
+        // A run pays out once.
+        $db->prepare('DELETE FROM games_runs WHERE token_hash = ?')->execute([hash('sha256', $run)]);
         $ship = substr(preg_replace('/[^a-z0-9_]/', '', strtolower((string) ($in['ship'] ?? ''))) ?? '', 0, 16);
         $name = clean_name($in['name'] ?? '');
         $db->beginTransaction();
@@ -246,6 +309,80 @@ switch ($action) {
         }
         $db->commit();
         reply(200, ['best' => $best]);
+
+    case 'event':
+        // Anonymous counting: how often something happened today. No account, no address kept.
+        $in = body();
+        count_event($db, game_id($in['game'] ?? ''), (string) ($in['name'] ?? ''), (int) ($in['level'] ?? 0), (string) ($in['detail'] ?? ''));
+        reply(200, ['ok' => true]);
+
+    case 'client_error':
+        $in = body();
+        count_error($db, (string) ($in['message'] ?? ''), (string) ($in['place'] ?? ''), (string) ($in['version'] ?? ''));
+        reply(200, ['ok' => true]);
+
+    case 'admin_stats':
+        require_admin($db);
+        $since = gmdate('Y-m-d', time() - 13 * 86400);
+        $events = $db->prepare('SELECT day, name, level, detail, total FROM games_events WHERE day >= ? ORDER BY day DESC, name, level, detail');
+        $events->execute([$since]);
+        $errors = $db->prepare('SELECT day, message, place, version, total, last_at FROM games_errors WHERE day >= ? ORDER BY last_at DESC LIMIT 100');
+        $errors->execute([$since]);
+        $backups = array_map('basename', glob(data_folder() . '/backups/games-*.sqlite') ?: []);
+        sort($backups);
+        reply(200, [
+            'players' => (int) $db->query('SELECT COUNT(*) FROM games_users')->fetchColumn(),
+            'banned' => (int) $db->query('SELECT COUNT(*) FROM games_users WHERE banned = 1')->fetchColumn(),
+            'scores' => (int) $db->query('SELECT COUNT(*) FROM games_scores')->fetchColumn(),
+            'events' => $events->fetchAll(),
+            'errors' => $errors->fetchAll(),
+            'backups' => $backups,
+        ]);
+
+    case 'admin_player':
+        require_admin($db);
+        $player = user_by_username($db, $_GET['username'] ?? '');
+        $scores = $db->prepare('SELECT level, score, updated_at FROM games_scores WHERE user_id = ? ORDER BY level');
+        $scores->execute([(int) $player['id']]);
+        reply(200, ['username' => $player['username'], 'name' => $player['name'], 'email' => $player['email'],
+            'banned' => (int) $player['banned'] === 1, 'scores' => $scores->fetchAll()]);
+
+    case 'admin_score_delete':
+        // Removes one player's score on one level (level 0 = every level).
+        require_admin($db);
+        $in = body();
+        $player = user_by_username($db, $in['username'] ?? '');
+        $level = (int) ($in['level'] ?? 0);
+        if ($level > 0) {
+            $gone = $db->prepare('DELETE FROM games_scores WHERE user_id = ? AND level = ?');
+            $gone->execute([(int) $player['id'], $level]);
+        } else {
+            $gone = $db->prepare('DELETE FROM games_scores WHERE user_id = ?');
+            $gone->execute([(int) $player['id']]);
+        }
+        reply(200, ['removed' => $gone->rowCount()]);
+
+    case 'admin_photo_clear':
+        require_admin($db);
+        $player = user_by_username($db, body()['username'] ?? '');
+        $db->prepare('UPDATE games_users SET photo = NULL WHERE id = ?')->execute([(int) $player['id']]);
+        reply(200, ['ok' => true]);
+
+    case 'admin_ban':
+        // A banned player can still play and keep their save, but posts no scores and shows no photo.
+        require_admin($db);
+        $in = body();
+        $player = user_by_username($db, $in['username'] ?? '');
+        if (is_admin((string) $player['username'])) {
+            fail(400, 'An admin cannot be banned.');
+        }
+        $banned = !empty($in['banned']) ? 1 : 0;
+        $db->prepare('UPDATE games_users SET banned = ? WHERE id = ?')->execute([$banned, (int) $player['id']]);
+        if ($banned === 1) {
+            $db->prepare('DELETE FROM games_scores WHERE user_id = ?')->execute([(int) $player['id']]);
+            $db->prepare('UPDATE games_users SET photo = NULL WHERE id = ?')->execute([(int) $player['id']]);
+        }
+        reply(200, ['banned' => $banned === 1]);
 
     case 'providers':
         $on = social_providers();
