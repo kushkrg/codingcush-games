@@ -105,6 +105,15 @@ function add_usernames(PDO $db): void
     }
 }
 
+/** Players with these usernames are admins: every mission is open to them. More can be added in config.php under 'admins'. */
+const ADMIN_USERNAMES = ['kushkrg'];
+
+function is_admin(string $username): bool
+{
+    $extra = site_config()['admins'] ?? [];
+    return $username !== '' && in_array($username, array_merge(ADMIN_USERNAMES, is_array($extra) ? $extra : []), true);
+}
+
 const USERNAME_PATTERN = '/^[a-z][a-z0-9_]{2,15}$/';
 const RESERVED_USERNAMES = ['admin', 'administrator', 'moderator', 'support', 'codingcush', 'vyomastra', 'system', 'official', 'guest', 'pilot', 'null'];
 
@@ -135,7 +144,7 @@ function free_username(PDO $db, string $hint): string
     if (strlen($base) < 3) {
         $base = 'pilot';
     }
-    if (username_problem($base) === '' && !username_taken($db, $base)) {
+    if (username_problem($base) === '' && !is_admin($base) && !username_taken($db, $base)) {
         return $base;
     }
     do {

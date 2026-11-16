@@ -142,7 +142,7 @@ switch ($action) {
         $query = $db->prepare('SELECT email, username, created_at FROM games_users WHERE id = ?');
         $query->execute([$userId]);
         $row = $query->fetch();
-        reply(200, ['email' => $row['email'], 'username' => (string) $row['username'], 'joined_at' => (int) $row['created_at']]);
+        reply(200, ['email' => $row['email'], 'username' => (string) $row['username'], 'joined_at' => (int) $row['created_at'], 'admin' => is_admin((string) $row['username'])]);
 
     case 'username_set':
         $userId = require_user($db);
@@ -150,6 +150,11 @@ switch ($action) {
         $problem = username_problem($username);
         if ($problem !== '') {
             fail(400, $problem);
+        }
+        $current = $db->prepare('SELECT username FROM games_users WHERE id = ?');
+        $current->execute([$userId]);
+        if (is_admin($username) && (string) $current->fetchColumn() !== $username) {
+            fail(400, 'That username is not available.');
         }
         $query = $db->prepare('SELECT id FROM games_users WHERE username = ?');
         $query->execute([$username]);
