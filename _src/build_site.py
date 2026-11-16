@@ -115,8 +115,11 @@ def page(path, title, description, body, schema, preload=""):
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#070b1a">
-<link rel="icon" href="/favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="64x64">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 {preload}<style>{CSS.strip()}</style>
 <script type="application/ld+json">{graph}</script>
 </head>
@@ -310,6 +313,9 @@ game_schema = [
 (OUT / "404.html").write_text(page("/404.html", "Page not found | CodingCush Games", "This page does not exist.",
     '<section><h1>Page not found</h1><p class="lead">That page does not exist. The games are on the home page.</p><a class="btn" href="/">All games</a></section>', [ORG]).replace("index, follow, max-image-preview:large", "noindex"))
 
+(OUT / "site.webmanifest").write_text(json.dumps({"name": "CodingCush Games", "short_name": "CC Games", "start_url": "/", "display": "browser",
+    "background_color": "#070b1a", "theme_color": "#070b1a",
+    "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=1))
 (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {SITE}/sitemap.xml\n")
 urls = ["/", "/vyomastra/"]
 (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
