@@ -130,6 +130,14 @@ switch ($action) {
         $db->prepare('DELETE FROM games_sessions WHERE user_id = ?')->execute([$userId]);
         reply(200, ['ok' => true]);
 
+    case 'account_delete':
+        $userId = require_user($db);
+        foreach (['games_sessions', 'games_saves', 'games_scores'] as $table) {
+            $db->prepare("DELETE FROM $table WHERE user_id = ?")->execute([$userId]);
+        }
+        $db->prepare('DELETE FROM games_users WHERE id = ?')->execute([$userId]);
+        reply(200, ['ok' => true]);
+
     case 'save_get':
         $userId = require_user($db);
         $query = $db->prepare('SELECT data FROM games_saves WHERE user_id = ? AND game = ?');

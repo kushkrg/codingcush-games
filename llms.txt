@@ -11,5 +11,6 @@
 - Price: free. Coins and diamonds are earned only by playing.
 - Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
 - Controls (Vyomastra): on touch screens drag to move (fires automatically); with a mouse the ship follows the cursor and the left button fires; arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
-- Accounts: optional, email and password, created inside each game under Account.
+- Accounts: optional; email and password, or Google or Facebook sign-in, inside each game under Account. Accounts can be deleted there too.
+- Privacy policy: https://games.codingcush.com/privacy/
 - Publisher: CodingCush, https://codingcush.com/

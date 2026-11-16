@@ -185,7 +185,7 @@ def page(path, title, description, body, schema, preload=""):
 <main id="main">
 {body}
 </main>
-<footer><span>© {date.today().year} CodingCush. Free browser games made with the Godot engine.</span><span><a href="/">All games</a> · <a href="https://codingcush.com/">codingcush.com</a></span></footer>
+<footer><span>© {date.today().year} CodingCush. Free browser games made with the Godot engine.</span><span><a href="/">All games</a> · <a href="/privacy/">Privacy</a> · <a href="https://codingcush.com/">codingcush.com</a></span></footer>
 </div>
 <script>{SKY_JS.strip()}</script>
 </body>
@@ -363,6 +363,59 @@ game_schema = [
     "Vyomastra is a free browser space shooter with five weapons, boss fights, ships to unlock and a global leaderboard. No download. See the controls and play now.",
     game_body, game_schema, PRELOAD))
 
+PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games</a> / Privacy policy</nav>
+<section class="prose" aria-labelledby="pp-h">
+  <h1 id="pp-h">Privacy policy</h1>
+  <p class="lead">What CodingCush Games stores about you, why, and how to delete it. Last updated __TODAY__.</p>
+  <p>CodingCush Games (games.codingcush.com) is run by CodingCush. You can play every game as a guest without giving any personal information. This policy covers this games site; the main site codingcush.com has its own policy.</p>
+
+  <h2>If you play as a guest</h2>
+  <p>Your progress, coins, settings and local scores are saved only in your own browser, on your device. They are not sent to us. Clearing your browser's site data removes them.</p>
+
+  <h2>If you create an account</h2>
+  <p>An account is optional. It saves your progress online and puts your best scores on the global leaderboard. We store:</p>
+  <ul>
+    <li><b>Your email address</b>, to identify your account. It is never shown to other players.</li>
+    <li><b>Your password</b>, only as a one-way hash. We cannot read it. If you sign in with Google or Facebook, we never receive a password.</li>
+    <li><b>Your pilot name</b> (up to 12 characters), which is shown on the public leaderboard next to your scores.</li>
+    <li><b>Your game progress</b>: unlocked levels, coins, diamonds, ships, paints and best scores.</li>
+    <li><b>A sign-in token</b>, stored as a hash, so you stay signed in. It expires on its own.</li>
+  </ul>
+
+  <h2>Sign in with Google or Facebook</h2>
+  <p>If you choose "Continue with Google" or "Continue with Facebook", that company asks your permission and then gives us your <b>email address</b> and your <b>name</b>. We use the email to find or create your account and the name only to set your starting pilot name. We do not receive your password, friends list, photos or posts, and we never post anything on your behalf. Signing in with the same email by another method opens the same account.</p>
+
+  <h2>Security records</h2>
+  <p>When someone tries to sign in or create an account, we keep the IP address of that attempt for 15 minutes to block password guessing. Our hosting company, Hostinger, also keeps standard server logs.</p>
+
+  <h2>Cookies and browser storage</h2>
+  <p>We do not use advertising or tracking cookies. During a Google or Facebook sign-in, one short-lived cookie (about 10 minutes) checks that the reply really belongs to your sign-in. Games keep their save data and your sign-in in your browser's storage.</p>
+
+  <h2>Advertising and analytics</h2>
+  <p>This site currently shows no ads and runs no analytics scripts. If that changes, this page will be updated first.</p>
+
+  <h2>Sharing</h2>
+  <p>We do not sell or rent your information. It is stored on our hosting account with Hostinger. The only information visible to others is your pilot name, ship and scores on the leaderboard.</p>
+
+  <h2 id="delete">How to delete your account and data</h2>
+  <ol>
+    <li>Open the game and choose <b>Account</b> from the main menu.</li>
+    <li>Sign in, then choose <b>Delete my account</b> and confirm.</li>
+  </ol>
+  <p>This removes your email, password hash, online save, sign-in tokens and all your leaderboard scores from our server straight away. Progress saved in your browser stays until you clear the site data. If you cannot sign in, ask us through the <a href="https://codingcush.com/contact">contact page</a> from the email address of the account, and we will delete it. To also remove this site from your Google or Facebook account, use the "apps with access" page in that account's settings.</p>
+
+  <h2>Children</h2>
+  <p>The games are suitable for a general audience, but accounts are not meant for children under 13. Younger players can play as guests.</p>
+
+  <h2>Changes and contact</h2>
+  <p>If this policy changes, the date at the top changes with it. Questions: use the <a href="https://codingcush.com/contact">CodingCush contact page</a>.</p>
+</section>""".replace("__TODAY__", date.today().strftime("%-d %B %Y"))
+
+(OUT / "privacy").mkdir(parents=True, exist_ok=True)
+(OUT / "privacy" / "index.html").write_text(page("/privacy/", "Privacy policy | CodingCush Games",
+    "What CodingCush Games stores when you play as a guest or with an account, how Google and Facebook sign-in is used, and how to delete your account and data.",
+    PRIVACY_BODY, [ORG, {"@type": "WebPage", "@id": SITE + "/privacy/", "url": SITE + "/privacy/", "name": "Privacy policy", "isPartOf": {"@id": SITE + "/#website"}, "dateModified": TODAY}]))
+
 (OUT / "404.html").write_text(page("/404.html", "Page not found | CodingCush Games", "This page does not exist.",
     '<section><h1>Page not found</h1><p class="lead">That page does not exist. The games are on the home page.</p><a class="btn" href="/">All games</a></section>', [ORG]).replace("index, follow, max-image-preview:large", "noindex"))
 
@@ -370,7 +423,7 @@ game_schema = [
     "background_color": "#070b1a", "theme_color": "#070b1a",
     "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=1))
 (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {SITE}/sitemap.xml\n")
-urls = ["/", "/vyomastra/"]
+urls = ["/", "/vyomastra/", "/privacy/"]
 (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod></url>\n" for u in urls) + "</urlset>\n")
 (OUT / "llms.txt").write_text(f"""# CodingCush Games
@@ -386,7 +439,8 @@ urls = ["/", "/vyomastra/"]
 - Price: free. Coins and diamonds are earned only by playing.
 - Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
 - Controls (Vyomastra): on touch screens drag to move (fires automatically); with a mouse the ship follows the cursor and the left button fires; arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
-- Accounts: optional, email and password, created inside each game under Account.
+- Accounts: optional; email and password, or Google or Facebook sign-in, inside each game under Account. Accounts can be deleted there too.
+- Privacy policy: {SITE}/privacy/
 - Publisher: CodingCush, https://codingcush.com/
 """)
 print("built", sorted(p.name for p in OUT.iterdir()))
