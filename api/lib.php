@@ -51,6 +51,10 @@ function data_folder(): string
             file_put_contents($folder . '/.htaccess', "Require all denied\n");
         }
     }
+    // Belt and braces: wherever the folder ended up, the web server must never hand it out.
+    if (!is_file($folder . '/.htaccess')) {
+        @file_put_contents($folder . '/.htaccess', "Require all denied\n");
+    }
     return $folder;
 }
 
