@@ -1,0 +1,333 @@
+"""Builds the static pages of games.codingcush.com into ../games-site.
+Usage: python3 build_site.py     (edit GAMES below to add a game, then run again)"""
+import json
+from datetime import date
+from pathlib import Path
+
+SITE = "https://games.codingcush.com"
+OUT = Path(__file__).resolve().parent.parent
+TODAY = date.today().isoformat()
+
+CSS = """
+:root{--bg:#070b1a;--panel:#0e1530;--line:#26335f;--text:#eef2ff;--muted:#a5b1d6;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+ background-image:radial-gradient(900px 500px at 85% -10%,rgba(95,212,255,.15),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(140,90,255,.13),transparent 60%);background-repeat:no-repeat}
+a{color:var(--accent)}
+img{max-width:100%;height:auto;display:block}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;color:#000;padding:8px 12px;border-radius:8px;z-index:9}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0}
+.brand{font-weight:800;font-size:19px;letter-spacing:.06em;text-decoration:none;color:var(--text)}
+.brand span{color:var(--accent)}
+nav a{color:var(--muted);text-decoration:none;margin-left:20px;font-weight:600;font-size:15px;padding:8px 0;display:inline-block}
+nav a:hover{color:var(--text)}
+h1,h2,h3{line-height:1.15;margin:0;letter-spacing:.01em}
+h1{font-size:clamp(34px,5.6vw,60px);font-weight:800}
+h2{font-size:clamp(24px,3vw,30px);margin-bottom:16px}
+h3{font-size:20px}
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:36px;align-items:center;padding:26px 0 48px}
+.tag{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:99px;padding:5px 12px;margin-bottom:14px}
+.lead{color:var(--muted);font-size:19px;max-width:48ch;margin:14px 0 24px}
+.btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(180deg,#8fe4ff,#45b4ee);color:#04121f;font-weight:800;text-decoration:none;padding:15px 28px;border-radius:14px;box-shadow:0 10px 30px rgba(63,180,240,.3);transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:none;color:var(--text);border:1px solid var(--line);box-shadow:none;margin-left:10px}
+.shot{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.5);display:block;aspect-ratio:1366/768;background:#050816}
+.shot .badge{position:absolute;right:14px;bottom:14px;background:rgba(7,11,26,.85);border:1px solid var(--line);padding:8px 14px;border-radius:10px;font-weight:800;font-size:14px;letter-spacing:.1em;color:var(--text)}
+section{padding:22px 0 40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;text-decoration:none;color:var(--text);display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
+a.card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.card .body{padding:16px 18px 20px}
+.card p{color:var(--muted);margin:6px 0 12px;font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:0;list-style:none}
+.chips li{font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.card.soon{align-items:center;justify-content:center;text-align:center;min-height:280px;border-style:dashed;color:var(--muted);padding:24px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.panel h3{margin-bottom:12px}
+.board{list-style:none;margin:0;padding:0;min-height:200px}
+.board li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.board li:last-child{border:0}
+.board .place{width:26px;color:var(--muted);font-weight:700}
+.board li:first-child .place,.board li:first-child .score{color:var(--gold)}
+.board .name{flex:1}
+.board .score{font-variant-numeric:tabular-nums;font-weight:700}
+.steps{margin:0;padding-left:22px;color:var(--muted)}
+.steps li{margin-bottom:8px}
+.steps b,.prose b{color:var(--text)}
+.prose{max-width:72ch}
+.prose p,.prose li{color:var(--muted)}
+.prose p{margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:15.5px}
+caption{text-align:left;color:var(--muted);padding-bottom:8px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.scroll{overflow-x:auto}
+kbd{background:#182247;border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:1px 8px;font:600 14px ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,250px));gap:16px}
+.shots img{border-radius:14px;border:1px solid var(--line);width:100%}
+details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 18px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:700;padding:12px 0;font-size:17px}
+details p{color:var(--muted);margin:0 0 14px}
+.crumbs{color:var(--muted);font-size:14px;padding:4px 0 0}
+.crumbs a{color:var(--muted)}
+.note{border-left:3px solid var(--gold);padding:6px 14px;color:var(--muted);margin:0 0 18px}
+footer{border-top:1px solid var(--line);color:var(--muted);padding:22px 0 40px;font-size:14.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer a{color:var(--muted)}
+@media (max-width:820px){.hero,.cols{grid-template-columns:1fr}.hero{padding-top:8px}nav a{margin-left:14px}.btn.ghost{margin:10px 0 0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+"""
+
+BOARD_JS = """
+(async function(){const b=document.getElementById("board");if(!b)return;
+const one=(t)=>{b.textContent="";const li=document.createElement("li"),s=document.createElement("span");s.className="name";s.textContent=t;li.append(s);b.append(li)};
+try{const r=await fetch("/api/index.php?action=scores&game=%s&level=1&limit=8");const rows=(await r.json()).scores||[];
+if(!rows.length){one("No scores yet. Be the first!");return}
+b.textContent="";rows.forEach((x,i)=>{const li=document.createElement("li");[["place",i+1],["name",x.name],["score",Number(x.score).toLocaleString("en")]].forEach(([c,t])=>{const s=document.createElement("span");s.className=c;s.textContent=t;li.append(s)});b.append(li)})}
+catch(e){one("The leaderboard is unavailable right now.")}})();
+"""
+
+ORG = {"@type": "Organization", "@id": "https://codingcush.com/#org", "name": "CodingCush", "url": "https://codingcush.com/"}
+
+
+def page(path, title, description, body, schema, preload=""):
+    url = SITE + path
+    graph = json.dumps({"@context": "https://schema.org", "@graph": schema}, ensure_ascii=False, separators=(",", ":"))
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<meta name="description" content="{description}">
+<link rel="canonical" href="{url}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodingCush Games">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{description}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{SITE}/assets/vyomastra-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#070b1a">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+{preload}<style>{CSS.strip()}</style>
+<script type="application/ld+json">{graph}</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="/">CODING<span>CUSH</span> GAMES</a>
+  <nav aria-label="Main"><a href="/#games">Games</a><a href="/#leaderboard">Leaderboard</a><a href="https://codingcush.com/">Tutorials</a></nav>
+</header>
+<main id="main">
+{body}
+</main>
+<footer><span>© {date.today().year} CodingCush. Free browser games made with the Godot engine.</span><span><a href="/">All games</a> · <a href="https://codingcush.com/">codingcush.com</a></span></footer>
+</div>
+</body>
+</html>
+"""
+
+
+HERO_IMG = """<img src="/assets/vyomastra-800.webp" srcset="/assets/vyomastra-480.webp 480w, /assets/vyomastra-800.webp 800w, /assets/vyomastra-1280.webp 1280w" sizes="(max-width: 820px) 94vw, 540px" width="1366" height="768" alt="Vyomastra gameplay: a blue fighter above Earth shooting at enemy ships near a spiral galaxy" fetchpriority="high" decoding="async">"""
+PRELOAD = '<link rel="preload" as="image" href="/assets/vyomastra-800.webp" imagesrcset="/assets/vyomastra-480.webp 480w, /assets/vyomastra-800.webp 800w, /assets/vyomastra-1280.webp 1280w" imagesizes="(max-width: 820px) 94vw, 540px" fetchpriority="high">\n'
+
+HOME_FAQ = [
+    ("Are the games on CodingCush Games free?", "Yes. Every game on CodingCush Games is free to play in the browser. There is nothing to download or install, and an account is optional."),
+    ("Do I need an account to play?", "No. You can play as a guest and your progress is saved in that browser. A free account saves your progress online, so it follows you to another device, and puts your best scores on the global leaderboard."),
+    ("Which devices can run the games?", "The games run in a current version of Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer. You can play with touch, a keyboard or a gamepad."),
+    ("What are the games made with?", "The games are made with Godot 4, a free and open-source game engine, and exported to WebAssembly so they run inside the browser."),
+]
+
+home_body = f"""
+<div class="hero">
+  <div>
+    <span class="tag">Free · No download</span>
+    <h1>Free browser games with saved progress</h1>
+    <p class="lead">CodingCush Games is a collection of free games that run in your browser. They are built with the Godot engine, and a free account keeps your coins, unlocks and scores online.</p>
+    <a class="btn" href="/vyomastra/play/">▶ Play Vyomastra</a><a class="btn ghost" href="#games">All games</a>
+  </div>
+  <a class="shot" href="/vyomastra/" aria-label="Vyomastra: game details and how to play">{HERO_IMG}<span class="badge">▶ PLAY</span></a>
+</div>
+
+<section id="games" aria-labelledby="games-h">
+  <h2 id="games-h">Games</h2>
+  <div class="grid">
+    <a class="card" href="/vyomastra/">
+      <img src="/assets/vyomastra-480.webp" width="480" height="270" alt="" loading="lazy" decoding="async">
+      <div class="body">
+        <h3>Vyomastra</h3>
+        <p>A space shooter with five weapons, boss fights, three ships to unlock and paint jobs to buy.</p>
+        <ul class="chips"><li>Shooter</li><li>Touch · Keyboard · Gamepad</li><li>Leaderboard</li></ul>
+      </div>
+    </a>
+    <div class="card soon"><div><h3>More games on the way</h3><p>New games appear here as they are finished.</p></div></div>
+  </div>
+</section>
+
+<section id="leaderboard" aria-labelledby="board-h">
+  <h2 id="board-h">Leaderboard</h2>
+  <div class="cols">
+    <div class="panel">
+      <h3>Vyomastra · Level 1 top pilots</h3>
+      <ol class="board" id="board" aria-live="polite"><li><span class="name">Loading…</span></li></ol>
+    </div>
+    <div class="panel">
+      <h3>How to get on the leaderboard</h3>
+      <ol class="steps">
+        <li><b>Open a game</b> and choose <b>Account</b> in its menu.</li>
+        <li><b>Create a free account</b> with an email and a password.</li>
+        <li><b>Finish a run.</b> Your best score for each level is posted automatically.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="faq-h">
+  <h2 id="faq-h">Questions and answers</h2>
+  {''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in HOME_FAQ)}
+</section>
+<script>{BOARD_JS.strip() % 'vyomastra'}</script>
+"""
+
+home_schema = [
+    {"@type": "WebSite", "@id": SITE + "/#site", "url": SITE + "/", "name": "CodingCush Games", "description": "Free browser games made with the Godot engine.", "publisher": {"@id": ORG["@id"]}, "inLanguage": "en"},
+    ORG,
+    {"@type": "ItemList", "name": "Games", "itemListElement": [{"@type": "ListItem", "position": 1, "url": SITE + "/vyomastra/", "name": "Vyomastra"}]},
+    {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in HOME_FAQ]},
+]
+
+GAME_FAQ = [
+    ("What is Vyomastra?", "Vyomastra is a free vertical space shooter that runs in the browser. You fly a fighter up the screen, shoot waves of enemy ships, collect weapon pick-ups, coins and diamonds, and fight a boss at the end of the level."),
+    ("Is Vyomastra free?", "Yes. Vyomastra is free to play and has no purchases with real money. Coins and diamonds are earned only by playing."),
+    ("How do I play Vyomastra?", "On a phone, drag a finger to move and the ship fires by itself. On a computer, move with the arrow keys or W A S D, hold Space or J to fire, and press Esc or P to pause. A gamepad also works: left stick or D-pad to move and the A button to fire."),
+    ("How do I save my progress in Vyomastra?", "Progress saves automatically in your browser. To keep it online and use it on another device, open Account in the game menu and create a free account with an email and password."),
+    ("How do I unlock new ships in Vyomastra?", "Open Hangar in the game menu. Bulwark costs 1,200 coins and Wisp costs 20 diamonds. Coins drop from every enemy you destroy; diamonds come from bosses and from clearing a level for the first time."),
+    ("Can I play Vyomastra on a phone?", "Yes. On a phone or tablet, drag a finger anywhere on the screen to move the ship; it fires automatically while your finger is down. Tap the pause button at the top to pause."),
+    ("How many levels does Vyomastra have?", "Two levels are playable now: Low Orbit, with the Gatekeeper boss, and Rock Belt, an asteroid field with the Crusher boss. Eight levels are planned, and each one unlocks when you beat the level before it."),
+]
+
+WEAPONS = [("Blaster", "Blue", "Starting weapon. Balanced speed and fire rate."), ("Rapid", "Green", "Fastest shots and fire rate, low damage per shot."),
+           ("Heavy", "Red", "Slow, large shots that do four times the damage."), ("Wide", "Purple", "A fan of three, five or seven shots."),
+           ("Pierce", "Cyan", "Shots pass through enemies and hit everything in line.")]
+SHIPS = [("Arrow", "Free", "Balanced all-rounder."), ("Bulwark", "1,200 coins", "One extra life, but slower."), ("Wisp", "20 diamonds", "Fastest ship with the smallest hit area.")]
+
+game_body = f"""
+<p class="crumbs"><a href="/">Games</a> › Vyomastra</p>
+<div class="hero">
+  <div>
+    <span class="tag">Space shooter · Free</span>
+    <h1>Vyomastra</h1>
+    <p class="lead">Vyomastra is a free space shooter you play in your browser. Fly up from Earth orbit, switch between five weapons, collect coins and diamonds, and beat the boss to unlock the next level. It plays on phones, tablets and computers.</p>
+    <a class="btn" href="/vyomastra/play/">▶ Play now</a><a class="btn ghost" href="#how">How to play</a>
+  </div>
+  <a class="shot" href="/vyomastra/play/" aria-label="Play Vyomastra">{HERO_IMG}<span class="badge">▶ PLAY</span></a>
+</div>
+
+<section id="how" aria-labelledby="how-h">
+  <h2 id="how-h">How to play Vyomastra</h2>
+  <div class="scroll"><table>
+    <caption>Controls</caption>
+    <thead><tr><th scope="col">Action</th><th scope="col">Touch</th><th scope="col">Keyboard</th><th scope="col">Gamepad</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Move</th><td>Drag a finger</td><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Left stick or D-pad</td></tr>
+      <tr><th scope="row">Fire</th><td>Automatic while touching</td><td>Hold <kbd>Space</kbd> or <kbd>J</kbd></td><td>A button</td></tr>
+      <tr><th scope="row">Pause</th><td>Pause button</td><td><kbd>Esc</kbd> or <kbd>P</kbd></td><td>Start</td></tr>
+      <tr><th scope="row">Fullscreen</th><td>—</td><td><kbd>F11</kbd> in the browser</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="weapons-h">
+  <h2 id="weapons-h">Weapons and pick-ups</h2>
+  <div class="prose"><p>Destroyed enemies drop pick-ups. A weapon pick-up switches your weapon; picking up the weapon you already hold raises its power level, up to level 3. A <b>P</b> pick-up also raises the power level and a <b>+</b> pick-up gives an extra life. Getting hit costs a life and one power level.</p></div>
+  <div class="scroll"><table>
+    <caption>The five weapons</caption>
+    <thead><tr><th scope="col">Weapon</th><th scope="col">Shot colour</th><th scope="col">What it does</th></tr></thead>
+    <tbody>{''.join(f'<tr><th scope="row">{n}</th><td>{c}</td><td>{d}</td></tr>' for n, c, d in WEAPONS)}</tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="ships-h">
+  <h2 id="ships-h">Ships, coins and diamonds</h2>
+  <div class="prose"><p>Every enemy drops <b>coins</b>. Bosses drop <b>diamonds</b>, and clearing a level for the first time pays a diamond bonus. Spend them in the Hangar on ships and on eight paint colours. Nothing is sold for real money.</p></div>
+  <div class="scroll"><table>
+    <caption>Ships in the Hangar</caption>
+    <thead><tr><th scope="col">Ship</th><th scope="col">Price</th><th scope="col">Strength</th></tr></thead>
+    <tbody>{''.join(f'<tr><th scope="row">{n}</th><td>{p}</td><td>{d}</td></tr>' for n, p, d in SHIPS)}</tbody>
+  </table></div>
+  <div class="shots" style="margin-top:20px">
+    <img src="/assets/vyomastra-boss.webp" width="405" height="720" loading="lazy" decoding="async" alt="Vyomastra boss fight against the Gatekeeper, with its health bar at the top">
+    <img src="/assets/vyomastra-hangar.webp" width="405" height="720" loading="lazy" decoding="async" alt="Vyomastra Hangar screen showing a ship, its stats and paint colours">
+  </div>
+</section>
+
+<section id="leaderboard" aria-labelledby="board-h">
+  <h2 id="board-h">Leaderboard and saved progress</h2>
+  <div class="cols">
+    <div class="panel"><h3>Level 1 top pilots</h3><ol class="board" id="board" aria-live="polite"><li><span class="name">Loading…</span></li></ol></div>
+    <div class="panel"><h3>Save progress and post scores</h3>
+      <ol class="steps"><li>Open <b>Account</b> in the game menu.</li><li><b>Create a free account</b> with an email and a password.</li><li><b>Finish a run.</b> Your best score per level goes on the global leaderboard, and your coins, diamonds, ships and unlocked levels are saved online.</li></ol>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="faq-h">
+  <h2 id="faq-h">Vyomastra questions and answers</h2>
+  {''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in GAME_FAQ)}
+  <p style="margin-top:22px"><a class="btn" href="/vyomastra/play/">▶ Play Vyomastra</a></p>
+</section>
+<script>{BOARD_JS.strip() % 'vyomastra'}</script>
+"""
+
+game_schema = [
+    {"@type": ["VideoGame", "WebApplication"], "@id": SITE + "/vyomastra/#game", "name": "Vyomastra", "url": SITE + "/vyomastra/",
+     "description": "Vyomastra is a free vertical space shooter that runs in the browser, with five weapons, boss fights, unlockable ships and a global leaderboard.",
+     "genre": ["Shoot 'em up", "Arcade"], "gamePlatform": "Web browser", "applicationCategory": "GameApplication", "operatingSystem": "Any (modern web browser)",
+     "playMode": "SinglePlayer", "inLanguage": "en", "image": SITE + "/assets/vyomastra-og.jpg", "isAccessibleForFree": True,
+     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@id": ORG["@id"]}, "publisher": {"@id": ORG["@id"]}, "dateModified": TODAY},
+    ORG,
+    {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Games", "item": SITE + "/"}, {"@type": "ListItem", "position": 2, "name": "Vyomastra", "item": SITE + "/vyomastra/"}]},
+    {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in GAME_FAQ]},
+]
+
+(OUT / "vyomastra").mkdir(parents=True, exist_ok=True)
+(OUT / "index.html").write_text(page("/", "CodingCush Games: free browser games with saved progress",
+    "Play free games in your browser with no download. Made with the Godot engine by CodingCush. A free account saves your progress and posts your scores to the global leaderboard.",
+    home_body, home_schema, PRELOAD))
+(OUT / "vyomastra" / "index.html").write_text(page("/vyomastra/", "Vyomastra: free space shooter to play in your browser",
+    "Vyomastra is a free browser space shooter with five weapons, boss fights, ships to unlock and a global leaderboard. No download. See the controls and play now.",
+    game_body, game_schema, PRELOAD))
+
+(OUT / "404.html").write_text(page("/404.html", "Page not found | CodingCush Games", "This page does not exist.",
+    '<section><h1>Page not found</h1><p class="lead">That page does not exist. The games are on the home page.</p><a class="btn" href="/">All games</a></section>', [ORG]).replace("index, follow, max-image-preview:large", "noindex"))
+
+(OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {SITE}/sitemap.xml\n")
+urls = ["/", "/vyomastra/"]
+(OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod></url>\n" for u in urls) + "</urlset>\n")
+(OUT / "llms.txt").write_text(f"""# CodingCush Games
+
+> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). No download and no real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
+
+## Games
+
+- [Vyomastra]({SITE}/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
+
+## Facts
+
+- Price: free. Coins and diamonds are earned only by playing.
+- Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
+- Controls (Vyomastra): on touch screens drag to move (fires automatically); arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
+- Accounts: optional, email and password, created inside each game under Account.
+- Publisher: CodingCush, https://codingcush.com/
+""")
+print("built", sorted(p.name for p in OUT.iterdir()))

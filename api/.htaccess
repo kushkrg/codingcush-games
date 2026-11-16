@@ -1,0 +1,7 @@
+# Keep configuration and SQL files private; pass the sign-in header through to PHP.
+<FilesMatch "^(config(\.sample)?\.php|schema\.sql)$">
+  Require all denied
+</FilesMatch>
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

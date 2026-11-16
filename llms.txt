@@ -1,0 +1,15 @@
+# CodingCush Games
+
+> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). No download and no real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
+
+## Games
+
+- [Vyomastra](https://games.codingcush.com/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, keyboard or gamepad. Two levels are playable (Low Orbit and Rock Belt) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged.
+
+## Facts
+
+- Price: free. Coins and diamonds are earned only by playing.
+- Platform: current Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer.
+- Controls (Vyomastra): on touch screens drag to move (fires automatically); arrow keys or WASD to move, Space or J to fire, Esc or P to pause; gamepad supported.
+- Accounts: optional, email and password, created inside each game under Account.
+- Publisher: CodingCush, https://codingcush.com/
