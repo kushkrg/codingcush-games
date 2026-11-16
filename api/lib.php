@@ -68,7 +68,9 @@ function open_database(): PDO
     ];
     $config = site_config();
     if (isset($config['dsn'])) {
-        return new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, $options);
+        $db = new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, $options);
+        add_usernames($db);
+        return $db;
     }
     $folder = data_folder();
     $db = new PDO('sqlite:' . $folder . '/games.sqlite', null, null, $options);
@@ -80,7 +82,75 @@ function open_database(): PDO
     $db->exec('CREATE TABLE IF NOT EXISTS games_scores (user_id INTEGER NOT NULL, game TEXT NOT NULL, level INTEGER NOT NULL, name TEXT NOT NULL, ship TEXT NOT NULL DEFAULT \'\', score INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, game, level))');
     $db->exec('CREATE INDEX IF NOT EXISTS games_scores_board ON games_scores (game, level, score)');
     $db->exec('CREATE TABLE IF NOT EXISTS games_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL, made_at INTEGER NOT NULL)');
+    add_usernames($db);
     return $db;
+}
+
+/**
+ * Usernames were added after launch: on a database made before that, add the column
+ * and give every existing player one. Does nothing once the column exists.
+ */
+function add_usernames(PDO $db): void
+{
+    try {
+        $db->query('SELECT username FROM games_users LIMIT 1');
+        return;
+    } catch (PDOException $missing) {
+        $db->exec('ALTER TABLE games_users ADD COLUMN username VARCHAR(16)');
+        $db->exec('CREATE UNIQUE INDEX games_users_username ON games_users (username)');
+    }
+    foreach ($db->query('SELECT id, name, email FROM games_users WHERE username IS NULL')->fetchAll() as $row) {
+        $db->prepare('UPDATE games_users SET username = ? WHERE id = ?')
+            ->execute([free_username($db, $row['name'] === 'PILOT' ? strstr($row['email'], '@', true) : $row['name']), $row['id']]);
+    }
+}
+
+const USERNAME_PATTERN = '/^[a-z][a-z0-9_]{2,15}$/';
+const RESERVED_USERNAMES = ['admin', 'administrator', 'moderator', 'support', 'codingcush', 'vyomastra', 'system', 'official', 'guest', 'pilot', 'null'];
+
+/** Why a username cannot be used, or '' when it is fine. Does not check whether it is taken. */
+function username_problem(string $username): string
+{
+    if (!preg_match(USERNAME_PATTERN, $username)) {
+        return 'Use 3 to 16 characters: small letters, numbers and _ only, starting with a letter.';
+    }
+    if (in_array($username, RESERVED_USERNAMES, true)) {
+        return 'That username is not available.';
+    }
+    return '';
+}
+
+function username_taken(PDO $db, string $username): bool
+{
+    $query = $db->prepare('SELECT id FROM games_users WHERE username = ?');
+    $query->execute([$username]);
+    return (bool) $query->fetch();
+}
+
+/** A username nobody has yet, based on a name or the first part of an email address. */
+function free_username(PDO $db, string $hint): string
+{
+    $base = substr(preg_replace('/[^a-z0-9_]/', '', strtolower($hint)) ?? '', 0, 11);
+    $base = ltrim($base, '0123456789_');
+    if (strlen($base) < 3) {
+        $base = 'pilot';
+    }
+    if (username_problem($base) === '' && !username_taken($db, $base)) {
+        return $base;
+    }
+    do {
+        $candidate = $base . '_' . random_int(100, 9999);
+    } while (username_taken($db, $candidate));
+    return $candidate;
+}
+
+/** Adds a player and returns their id. */
+function create_user(PDO $db, string $email, string $passHash, string $name): int
+{
+    $hint = clean_name($name) === 'PILOT' ? (string) strstr($email, '@', true) : $name;
+    $db->prepare('INSERT INTO games_users (email, pass_hash, name, created_at, username) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$email, $passHash, clean_name($name), time(), free_username($db, $hint)]);
+    return (int) $db->lastInsertId();
 }
 
 function clean_name(mixed $value): string

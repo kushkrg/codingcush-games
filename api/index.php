@@ -106,9 +106,8 @@ switch ($action) {
         if ($exists->fetch()) {
             fail(409, 'This email already has an account. Sign in instead.');
         }
-        $db->prepare('INSERT INTO games_users (email, pass_hash, name, created_at) VALUES (?, ?, ?, ?)')
-            ->execute([$email, password_hash($password, PASSWORD_DEFAULT), clean_name($in['name'] ?? ''), time()]);
-        reply(200, ['token' => start_session($db, (int) $db->lastInsertId()), 'email' => $email]);
+        $userId = create_user($db, $email, password_hash($password, PASSWORD_DEFAULT), (string) ($in['name'] ?? ''));
+        reply(200, ['token' => start_session($db, $userId), 'email' => $email]);
 
     case 'login':
         $in = body();
@@ -137,6 +136,33 @@ switch ($action) {
         }
         $db->prepare('DELETE FROM games_users WHERE id = ?')->execute([$userId]);
         reply(200, ['ok' => true]);
+
+    case 'me':
+        $userId = require_user($db);
+        $query = $db->prepare('SELECT email, username, created_at FROM games_users WHERE id = ?');
+        $query->execute([$userId]);
+        $row = $query->fetch();
+        reply(200, ['email' => $row['email'], 'username' => (string) $row['username'], 'joined_at' => (int) $row['created_at']]);
+
+    case 'username_set':
+        $userId = require_user($db);
+        $username = strtolower(trim((string) (body()['username'] ?? '')));
+        $problem = username_problem($username);
+        if ($problem !== '') {
+            fail(400, $problem);
+        }
+        $query = $db->prepare('SELECT id FROM games_users WHERE username = ?');
+        $query->execute([$username]);
+        $owner = $query->fetch();
+        if ($owner && (int) $owner['id'] !== $userId) {
+            fail(409, 'That username is taken. Try another one.');
+        }
+        try {
+            $db->prepare('UPDATE games_users SET username = ? WHERE id = ?')->execute([$username, $userId]);
+        } catch (PDOException $clash) {
+            fail(409, 'That username is taken. Try another one.');
+        }
+        reply(200, ['username' => $username]);
 
     case 'save_get':
         $userId = require_user($db);
@@ -176,9 +202,9 @@ switch ($action) {
         $game = game_id($_GET['game'] ?? '');
         $level = (int) ($_GET['level'] ?? 1);
         $limit = max(1, min(50, (int) ($_GET['limit'] ?? 20)));
-        $query = $db->prepare("SELECT name, ship, score FROM games_scores WHERE game = ? AND level = ? ORDER BY score DESC, updated_at ASC LIMIT $limit");
+        $query = $db->prepare("SELECT s.name, s.ship, s.score, u.username FROM games_scores s LEFT JOIN games_users u ON u.id = s.user_id WHERE s.game = ? AND s.level = ? ORDER BY s.score DESC, s.updated_at ASC LIMIT $limit");
         $query->execute([$game, $level]);
-        $rows = array_map(fn(array $row): array => ['name' => $row['name'], 'ship' => $row['ship'], 'score' => (int) $row['score']], $query->fetchAll());
+        $rows = array_map(fn(array $row): array => ['name' => $row['name'], 'username' => (string) $row['username'], 'ship' => $row['ship'], 'score' => (int) $row['score']], $query->fetchAll());
         reply(200, ['scores' => $rows]);
 
     case 'score_put':

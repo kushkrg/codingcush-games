@@ -150,8 +150,6 @@ if ($user) {
     $userId = (int) $user['id'];
 } else {
     // No password is ever set for this account: the stored hash is of random bytes nobody knows.
-    $db->prepare('INSERT INTO games_users (email, pass_hash, name, created_at) VALUES (?, ?, ?, ?)')
-        ->execute([$email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), clean_name($person['name'] ?? ''), time()]);
-    $userId = (int) $db->lastInsertId();
+    $userId = create_user($db, $email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), (string) ($person['name'] ?? ''));
 }
 finish($back, ['vy_token' => start_session($db, $userId), 'vy_email' => $email]);
