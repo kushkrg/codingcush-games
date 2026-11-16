@@ -6,6 +6,7 @@
 		<title>Play Vyomastra | CodingCush Games</title>
 		<meta name="description" content="Play Vyomastra, a free space shooter, in your browser.">
 		<meta name="robots" content="noindex, follow">
+		<meta name="theme-color" content="#070b1a">
 		<link rel="canonical" href="https://games.codingcush.com/vyomastra/">
 		<style>
 html, body, #canvas {
@@ -92,6 +93,22 @@ body {
 	text-align: center;
 	z-index: 1;
 }
+#status { gap: 0; }
+#status-splash { position: static; margin: 0; max-width: min(62vw, 300px); max-height: 36vh; height: auto; width: auto; }
+#status-progress { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }   /* kept for Godot's script, hidden from view */
+#vy-load { display: none; width: min(60vw, 260px); margin-top: 26px; font: 600 11px/1 system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; letter-spacing: .28em; color: #8fa3cf; text-align: center; }
+#vy-load.on { display: block; }
+#vy-track { position: relative; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .09); }
+#vy-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 2px; background: linear-gradient(90deg, rgba(111, 216, 255, 0), #6fd8ff 55%, #ffffff); box-shadow: 0 0 10px rgba(111, 216, 255, .7); transition: width .25s ease-out; }
+/* the bright point at the front of the line: the ship's engine light */
+#vy-fill::after { content: ""; position: absolute; right: -3px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px #6fd8ff, 0 0 22px 6px rgba(111, 216, 255, .55); }
+#vy-load.wait #vy-fill { width: 28%; animation: vy-sweep 1.5s ease-in-out infinite; transition: none; }
+@keyframes vy-sweep { 0% { left: -28%; } 100% { left: 100%; } }
+#vy-load.wait #vy-track { overflow: hidden; }
+#vy-text { margin-top: 14px; }
+#vy-text b { color: #dfe9ff; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { #vy-fill { transition: none; } #vy-load.wait #vy-fill { animation: none; left: 0; width: 100%; opacity: .4; } }
+
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
@@ -109,12 +126,16 @@ body {
 		<div id="status">
 			<img id="status-splash" class="show-image--true fullsize--false use-filter--true" src="index.png" alt="">
 			<progress id="status-progress"></progress>
+			<div id="vy-load" class="wait" role="progressbar" aria-label="Loading game" aria-valuemin="0" aria-valuemax="100">
+				<div id="vy-track"><div id="vy-fill"></div></div>
+				<div id="vy-text">LOADING <b id="vy-pct"></b></div>
+			</div>
 			<div id="status-notice"></div>
 		</div>
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":18003168,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":17925540,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -218,6 +239,29 @@ const engine = new Engine(GODOT_CONFIG);
 	}
 }());
 		</script>
+		<script>
+// Mirrors Godot's hidden <progress> onto the custom loading line.
+(function () {
+	var bar = document.getElementById('status-progress'), box = document.getElementById('vy-load');
+	var fill = document.getElementById('vy-fill'), pct = document.getElementById('vy-pct');
+	if (!bar || !box) { return; }
+	function sync() {
+		if (!document.body.contains(box)) { return; }            // overlay removed: the game has started
+		box.classList.toggle('on', bar.style.display !== 'none');
+		var known = bar.hasAttribute('value') && bar.max > 0;
+		box.classList.toggle('wait', !known);
+		if (known) {
+			var p = Math.max(0, Math.min(100, Math.round(bar.value / bar.max * 100)));
+			fill.style.width = p + '%'; pct.textContent = p + '%'; box.setAttribute('aria-valuenow', p);
+		} else {
+			fill.style.width = ''; pct.textContent = ''; box.removeAttribute('aria-valuenow');
+		}
+		requestAnimationFrame(sync);
+	}
+	sync();
+})();
+		</script>
+
 	</body>
 </html>
 
