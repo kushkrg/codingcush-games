@@ -4,7 +4,7 @@
 
 ## Games
 
-- [Vyomastra](https://games.codingcush.com/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Four levels are playable (Low Orbit, Rock Belt, Ice Moon and Storm Giant) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged. In Ice Moon, frost shots freeze the ship (slower movement and firing) instead of costing a life; a second freeze while frozen costs a life. In Storm Giant, gusts of wind push the ship sideways and lightning strikes a column of the screen about a second after a flickering warning line appears.
+- [Vyomastra](https://games.codingcush.com/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Five levels are playable (Low Orbit, Rock Belt, Ice Moon, Storm Giant and The Hive) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged. In Ice Moon, frost shots freeze the ship (slower movement and firing) instead of costing a life; a second freeze while frozen costs a life. In Storm Giant, gusts of wind push the ship sideways and lightning strikes a column of the screen about a second after a flickering warning line appears. In The Hive, captured pilots drift down wrapped in green webs: shooting or touching the web frees them for score and coins, and every third rescue drops an extra life.
 
 ## Facts
 
