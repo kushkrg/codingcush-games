@@ -1,4 +1,4 @@
-// Vyomastra offline support, version 1.11.0
+// Vyomastra offline support, version 1.11.1
 const CACHE = 'vyomastra-play-v1';
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (event) {

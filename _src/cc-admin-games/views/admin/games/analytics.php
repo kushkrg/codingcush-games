@@ -24,7 +24,7 @@ $kpis = [
     ['Continues bought', $now['continues'], $before['continues']],
     ['App installs', $now['installs'], $before['installs']],
     ['Website visits', $now['page_views'], $before['page_views']],
-    ['Play clicks', $now['play_clicks'], $before['play_clicks']],
+    ['Downloads', $now['downloads'], $before['downloads']],
 ];
 ?>
 <div class="pa-kpis gm-kpis">
@@ -55,7 +55,9 @@ $kpis = [
     <div class="dashboard-section">
         <div class="section-header"><h3 class="section-title">Where it is played</h3></div>
         <?= gm_bars($platforms['platform'], $labels) ?>
-        <p class="pa-note">"Installed app" = added to the home screen or installed from the browser. Windows and Android builds are not published yet, so there are no downloads to count.</p>
+        <p class="pa-note">"Installed app" = added to the home screen from the browser. Windows and macOS = the downloaded game, counted when it is opened with internet on.</p>
+        <h4 class="gm-subhead">Downloads</h4>
+        <?= gm_bars($pages['downloads'], $labels, 'No downloads in this period.') ?>
     </div>
     <div class="dashboard-section">
         <div class="section-header"><h3 class="section-title">How players sign in</h3></div>

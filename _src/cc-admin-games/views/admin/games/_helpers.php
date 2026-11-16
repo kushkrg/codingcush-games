@@ -62,7 +62,7 @@ if (!function_exists('gm_trend')) {
     function gm_labels(): array
     {
         return [
-            'web' => 'Browser', 'app' => 'Installed app', 'win' => 'Windows', 'other' => 'Other', 'unknown' => 'Older game version',
+            'web' => 'Browser', 'app' => 'Installed app', 'win' => 'Windows', 'mac' => 'macOS', 'other' => 'Other', 'unknown' => 'Older game version',
             'guest' => 'Guests (no account)', 'member' => 'Signed in',
             'google' => 'Google', 'facebook' => 'Facebook', 'email' => 'Email & password',
             'google_new' => 'Google (new account)', 'facebook_new' => 'Facebook (new account)', 'email_new' => 'Email (new account)',

@@ -41,7 +41,7 @@ class GamesData
     ];
 
     /** Platforms the game reports with each visit ("web_guest", "app_member"...). */
-    public const PLATFORMS = ['web' => 'Browser', 'app' => 'Installed app', 'win' => 'Windows', 'other' => 'Other'];
+    public const PLATFORMS = ['web' => 'Browser', 'app' => 'Installed app', 'win' => 'Windows', 'mac' => 'macOS', 'other' => 'Other'];
 
     /** Defaults for the settings the games read (see SETTING_DEFAULTS in games/api/lib.php). */
     public const SETTING_DEFAULTS = [
@@ -292,6 +292,7 @@ class GamesData
             'installs' => self::sum($rows, 'install'),
             'page_views' => self::sum($rows, 'page_view'),
             'play_clicks' => self::sum($rows, 'play_click'),
+            'downloads' => self::sum($rows, 'download'),
             'errors' => self::hasTable('games_errors') ? self::one('SELECT COALESCE(SUM(total), 0) FROM games_errors WHERE day >= ? AND day <= ?', [$from, $to]) : 0,
             'new_logins' => self::sum($rows, 'login', $newLogin),
         ];
@@ -318,7 +319,7 @@ class GamesData
         $list = self::dayList($days);
         $out = [];
         foreach ($list as $day) {
-            $out[$day] = ['label' => date('j M', strtotime($day)), 'day' => $day, 'sessions' => 0, 'guest' => 0, 'member' => 0, 'plays' => 0, 'wins' => 0, 'signups' => 0, 'views' => 0, 'logins' => 0, 'installs' => 0];
+            $out[$day] = ['label' => date('j M', strtotime($day)), 'day' => $day, 'sessions' => 0, 'guest' => 0, 'member' => 0, 'plays' => 0, 'wins' => 0, 'signups' => 0, 'views' => 0, 'logins' => 0, 'installs' => 0, 'downloads' => 0];
         }
         foreach (self::events($list[0], end($list)) as $r) {
             $d = $r['day'];
@@ -337,6 +338,7 @@ class GamesData
                 case 'page_view': $out[$d]['views'] += $t; break;
                 case 'login': $out[$d]['logins'] += $t; break;
                 case 'install': $out[$d]['installs'] += $t; break;
+                case 'download': $out[$d]['downloads'] += $t; break;
             }
         }
         $fromTs = strtotime($list[0] . ' 00:00:00 UTC');
@@ -396,14 +398,17 @@ class GamesData
         $views = [];
         $clicks = [];
         $installs = [];
+        $downloads = [];
         foreach (self::events(self::since($days), gmdate('Y-m-d'), 'hub') as $r) {
+            if ($r['name'] === 'download') { $downloads[(string) $r['detail']] = ($downloads[(string) $r['detail']] ?? 0) + (int) $r['total']; }
             $page = (string) $r['detail'];
             if ($r['name'] === 'page_view') { $views[$page] = ($views[$page] ?? 0) + (int) $r['total']; }
             if ($r['name'] === 'play_click') { $clicks[$page] = ($clicks[$page] ?? 0) + (int) $r['total']; }
             if ($r['name'] === 'install') { $installs[$page] = ($installs[$page] ?? 0) + (int) $r['total']; }
         }
         arsort($views);
-        return ['views' => $views, 'clicks' => $clicks, 'installs' => $installs];
+        arsort($downloads);
+        return ['views' => $views, 'clicks' => $clicks, 'installs' => $installs, 'downloads' => $downloads];
     }
 
     /** Per mission: starts, wins, losses, win rate, stars and what ended failed runs. */

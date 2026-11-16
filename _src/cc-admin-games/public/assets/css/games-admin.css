@@ -97,3 +97,4 @@ a.pa-kpi__trend{text-decoration:none}
 .gm-player .dashboard-section,.gm-form .dashboard-section,.content-body>.dashboard-section{margin-bottom:22px}
 .gm-form input[type=datetime-local],.gm-form input[type=number]{padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font:inherit;background:#fff;width:100%;box-sizing:border-box}
 .gm-form .section-header{margin-bottom:10px}
+.gm-subhead{margin:18px 0 6px;font-size:.95em}

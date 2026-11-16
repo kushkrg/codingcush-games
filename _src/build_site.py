@@ -82,6 +82,29 @@ details p{color:var(--muted);margin:0 0 14px}
 .note{border-left:3px solid var(--gold);padding:6px 14px;color:var(--muted);margin:0 0 18px}
 footer{border-top:1px solid var(--line);color:var(--muted);padding:22px 0 40px;font-size:14.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 footer a{color:var(--muted)}
+/* Downloads box on a game page */
+.dl{position:relative;margin:0 0 46px;padding:30px 30px 26px;border-radius:24px;background:linear-gradient(160deg,rgba(24,38,84,.92),rgba(10,15,36,.92));border:1px solid transparent;background-clip:padding-box;box-shadow:0 20px 60px rgba(3,6,20,.55)}
+.dl::before{content:"";position:absolute;inset:-1px;z-index:-1;border-radius:25px;background:linear-gradient(135deg,rgba(111,216,255,.75),rgba(140,90,255,.45) 45%,rgba(255,209,102,.6))}
+.dl-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;margin-bottom:22px}
+.dl-head h2{margin:6px 0 0}
+.dl-head p{margin:0;color:var(--muted);max-width:520px}
+.dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.dl-card{display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:18px;background:rgba(7,11,26,.62);border:1px solid var(--line);transition:border-color .2s,transform .2s}
+.dl-card:hover{border-color:rgba(111,216,255,.6);transform:translateY(-2px)}
+.dl-top{display:flex;align-items:center;gap:14px}
+.dl-icon{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(111,216,255,.22),rgba(111,216,255,.06));border:1px solid rgba(111,216,255,.35);color:var(--accent)}
+.dl-top h3{margin:0;font-size:22px}
+.dl-top small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.dl-meta{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.dl-meta li{font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+.dl-card .btn{justify-content:center;margin:4px 0 0}
+.dl-card details{color:var(--muted);font-size:14.5px}
+.dl-card summary{cursor:pointer;color:var(--text);font-weight:600}
+.dl-card details ol{margin:8px 0 0;padding-left:20px}
+.dl-card details li{margin-bottom:4px}
+.dl-perks{display:flex;flex-wrap:wrap;gap:10px 26px;margin:22px 0 0;padding:16px 0 0;border-top:1px solid var(--line);list-style:none;color:var(--muted);font-size:15px}
+.dl-perks li::before{content:"✓";color:#7ef0b0;font-weight:800;margin-right:8px}
+@media (max-width:820px){.dl{padding:22px 18px}.dl-grid{grid-template-columns:1fr}.dl-card .btn{padding:14px 16px;font-size:16px}}
 @media (max-width:820px){.hero,.cols{grid-template-columns:1fr}.hero{padding-top:8px}nav a{margin-left:14px}.btn.ghost{margin:10px 0 0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
 """
@@ -164,6 +187,8 @@ LIVE_JS = r"""
   document.addEventListener('click', function (e) {
     var link = e.target.closest && e.target.closest('a[href*="/play/"]');
     if (link) { send('play_click', where); }
+    var file = e.target.closest && e.target.closest('a[data-download]');
+    if (file) { send('download', file.getAttribute('data-download')); }
   });
   window.addEventListener('appinstalled', function () { send('install', 'hub'); });
   fetch('/api/index.php?action=site_config').then(function (r) { return r.json(); }).then(function (c) {
@@ -235,7 +260,7 @@ HERO_IMG = """<img src="/assets/vyomastra-800.webp" srcset="/assets/vyomastra-48
 PRELOAD = '<link rel="preload" as="image" href="/assets/vyomastra-800.webp" imagesrcset="/assets/vyomastra-480.webp 480w, /assets/vyomastra-800.webp 800w, /assets/vyomastra-1280.webp 1280w" imagesizes="(max-width: 820px) 94vw, 540px" fetchpriority="high">\n'
 
 HOME_FAQ = [
-    ("Are the games on CodingCush Games free?", "Yes. Every game on CodingCush Games is free to play in the browser. There is nothing to download or install, and an account is optional."),
+    ("Are the games on CodingCush Games free?", "Yes. Every game on CodingCush Games is free. Play in the browser with nothing to install, or download Vyomastra for Windows or macOS to play offline. An account is optional."),
     ("Do I need an account to play?", "No. You can play as a guest and your progress is saved in that browser. A free account saves your progress online, so it follows you to another device, and puts your best scores on the global leaderboard."),
     ("Which devices can run the games?", "The games run in a current version of Chrome, Edge, Firefox or Safari on a phone, tablet, laptop or desktop computer. You can play with touch, a keyboard or a gamepad."),
     ("What are the games made with?", "The games are made with Godot 4, a free and open-source game engine, and exported to WebAssembly so they run inside the browser."),
@@ -244,7 +269,7 @@ HOME_FAQ = [
 home_body = f"""
 <div class="hero">
   <div>
-    <span class="tag">Free · No download</span>
+    <span class="tag">Free · Browser, Windows &amp; Mac</span>
     <h1>Free browser games with saved progress</h1>
     <p class="lead">CodingCush Games is a collection of free games that run in your browser. They are built with the Godot engine, and a free account keeps your coins, unlocks and scores online.</p>
     <a class="btn" href="/vyomastra/play/">▶ Play Vyomastra</a><a class="btn ghost" href="#games">All games</a>
@@ -303,6 +328,7 @@ GAME_FAQ = [
     ("What is Vyomastra?", "Vyomastra is a free vertical space shooter that runs in the browser. You fly a fighter up the screen, shoot waves of enemy ships, collect weapon pick-ups, coins and diamonds, and fight a boss at the end of the level."),
     ("Is Vyomastra free?", "Yes. Vyomastra is free to play and has no purchases with real money. Coins and diamonds are earned only by playing."),
     ("How do I play Vyomastra?", "On a phone, drag a finger to move and the ship fires by itself. On a computer, move the mouse and the ship follows it, and hold the left button to fire; or move with the arrow keys or W A S D, hold Space or J to fire, and press Esc or P to pause. A gamepad also works: left stick or D-pad to move and the A button to fire."),
+    ("Can I play Vyomastra offline?", "Yes. Download Vyomastra for Windows or macOS from the game page. It needs no internet once downloaded and saves your progress on the computer. Sign in with your email in the game to keep that progress in the cloud and share it with the browser version."),
     ("How do I save my progress in Vyomastra?", "Progress saves automatically in your browser. To keep it online and use it on another device, open Account in the game menu and create a free account with an email and password."),
     ("How do I unlock new ships in Vyomastra?", "Open Hangar in the game menu. Bulwark costs 1,200 coins and Wisp costs 20 diamonds. Coins drop from every enemy you destroy; diamonds come from bosses and from clearing a level for the first time."),
     ("Can I play Vyomastra on a phone?", "Yes. On a phone or tablet, drag a finger anywhere on the screen to move the ship; it fires automatically while your finger is down. Tap the pause button at the top to pause."),
@@ -314,6 +340,52 @@ WEAPONS = [("Blaster", "Blue", "Starting weapon. Balanced speed and fire rate.")
            ("Pierce", "Cyan", "Shots pass through enemies and hit everything in line.")]
 SHIPS = [("Arrow", "Free", "Balanced all-rounder."), ("Bulwark", "1,200 coins", "One extra life, but slower."), ("Wisp", "20 diamonds", "Fastest ship with the smallest hit area.")]
 
+# Desktop builds kept in /downloads/ (named Vyomastra-<version>-Windows.zip / -macOS.zip).
+def find_download(platform):
+    found = sorted((OUT / "downloads").glob(f"Vyomastra-*-{platform}.zip"))
+    if not found:
+        return None
+    f = found[-1]
+    return {"href": "/downloads/" + f.name, "version": f.name.split("-")[1], "mb": round(f.stat().st_size / 1048576)}
+
+
+WIN_DL, MAC_DL = find_download("Windows"), find_download("macOS")
+ICON_PC = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="2"/><path d="M8 20.5h8M12 16.5v4"/></svg>'
+ICON_LAPTOP = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4.5" width="16" height="11" rx="1.6"/><path d="M2 19.5h20l-1.6-4H3.6z"/></svg>'
+
+
+def download_card(info, key, name, needs, icon, steps):
+    if not info:
+        return ""
+    items = "".join(f"<li>{x}</li>" for x in steps)
+    return f"""<article class="dl-card">
+      <div class="dl-top"><span class="dl-icon">{icon}</span><div><h3>{name}</h3><small>{needs}</small></div></div>
+      <ul class="dl-meta"><li>Version {info['version']}</li><li>{info['mb']} MB</li><li>No installer</li></ul>
+      <a class="btn" href="{info['href']}" download data-download="{key}">⬇ Download for {name}</a>
+      <details><summary>First time opening it</summary><ol>{items}</ol></details>
+    </article>"""
+
+
+DOWNLOAD_BOX = "" if not (WIN_DL or MAC_DL) else f"""
+<section class="dl" id="download" aria-labelledby="dl-h">
+  <div class="dl-head">
+    <div><span class="tag">Play offline</span><h2 id="dl-h">Download Vyomastra for your computer</h2></div>
+    <p>The same game as in the browser, as an app for Windows or Mac. It runs full screen and needs no internet once downloaded.</p>
+  </div>
+  <div class="dl-grid">
+    {download_card(WIN_DL, "win", "Windows", "Windows 10 or 11, 64-bit", ICON_PC, [
+        "Open the downloaded zip and drag the <b>Vyomastra</b> folder out, for example to your Desktop.",
+        "Double-click <b>Vyomastra.exe</b>.",
+        "If Windows says <b>&ldquo;Windows protected your PC&rdquo;</b>, click <b>More info</b>, then <b>Run anyway</b>. This shows for new games that are not yet known to Windows."])}
+    {download_card(MAC_DL, "mac", "macOS", "macOS 11 or newer, Apple silicon and Intel", ICON_LAPTOP, [
+        "Double-click the downloaded zip, then drag <b>Vyomastra</b> into your <b>Applications</b> folder.",
+        "The first time, <b>right-click</b> (or Control-click) Vyomastra and choose <b>Open</b>, then <b>Open</b> again.",
+        "If the Mac still refuses, open <b>System Settings &rsaquo; Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>. Later it opens with a normal double-click."])}
+  </div>
+  <ul class="dl-perks"><li>Works without internet</li><li>Progress saved on your computer</li><li>Sign in with email to share progress with the browser game</li><li>Keyboard, mouse or gamepad</li></ul>
+</section>
+"""
+
 game_body = f"""
 <p class="crumbs"><a href="/">Games</a> › Vyomastra</p>
 <div class="hero">
@@ -321,11 +393,11 @@ game_body = f"""
     <span class="tag">Space shooter · Free</span>
     <h1>Vyomastra</h1>
     <p class="lead">Vyomastra is a free space shooter you play in your browser. Fly up from Earth orbit, switch between five weapons, collect coins and diamonds, and beat the boss to unlock the next level. It plays on phones, tablets and computers.</p>
-    <a class="btn" href="/vyomastra/play/">▶ Play now</a><a class="btn ghost" href="#how">How to play</a>
+    <a class="btn" href="/vyomastra/play/">▶ Play now</a><a class="btn ghost" href="#download">⬇ Download</a>
   </div>
   <a class="shot" href="/vyomastra/play/" aria-label="Play Vyomastra">{HERO_IMG}<span class="badge">▶ PLAY</span></a>
 </div>
-
+{DOWNLOAD_BOX}
 <section id="how" aria-labelledby="how-h">
   <h2 id="how-h">How to play Vyomastra</h2>
   <div class="scroll"><table>
@@ -385,7 +457,7 @@ game_body = f"""
 game_schema = [
     {"@type": ["VideoGame", "WebApplication"], "@id": SITE + "/vyomastra/#game", "name": "Vyomastra", "url": SITE + "/vyomastra/",
      "description": "Vyomastra is a free vertical space shooter that runs in the browser, with five weapons, boss fights, unlockable ships and a global leaderboard.",
-     "genre": ["Shoot 'em up", "Arcade"], "gamePlatform": "Web browser", "applicationCategory": "GameApplication", "operatingSystem": "Any (modern web browser)",
+     "genre": ["Shoot 'em up", "Arcade"], "gamePlatform": ["Web browser", "Windows", "macOS"], "applicationCategory": "GameApplication", "operatingSystem": "Web browser, Windows 10 or 11, macOS 11 or newer",
      "playMode": "SinglePlayer", "inLanguage": "en", "image": SITE + "/assets/vyomastra-og.jpg", "isAccessibleForFree": True,
      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@id": ORG["@id"]}, "publisher": {"@id": ORG["@id"]}, "dateModified": TODAY},
     ORG,
@@ -395,10 +467,10 @@ game_schema = [
 
 (OUT / "vyomastra").mkdir(parents=True, exist_ok=True)
 (OUT / "index.html").write_text(page("/", "CodingCush Games: free browser games with saved progress",
-    "Play free games in your browser with no download. Made with the Godot engine by CodingCush. A free account saves your progress and posts your scores to the global leaderboard.",
+    "Play free games in your browser, or download them for Windows and macOS. Made with the Godot engine by CodingCush. A free account saves your progress and posts your scores to the global leaderboard.",
     home_body, home_schema, PRELOAD))
 (OUT / "vyomastra" / "index.html").write_text(page("/vyomastra/", "Vyomastra: free space shooter to play in your browser",
-    "Vyomastra is a free browser space shooter with five weapons, boss fights, ships to unlock and a global leaderboard. No download. See the controls and play now.",
+    "Vyomastra is a free browser space shooter with five weapons, boss fights, ships to unlock and a global leaderboard. Play in your browser or download it for Windows and macOS.",
     game_body, game_schema, PRELOAD))
 
 PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games</a> / Privacy policy</nav>
@@ -484,7 +556,7 @@ urls = ["/", "/vyomastra/", "/privacy/"]
     + "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod></url>\n" for u in urls) + "</urlset>\n")
 (OUT / "llms.txt").write_text(f"""# CodingCush Games
 
-> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). No download and no real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
+> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). Playable in the browser with nothing to install, or downloadable for Windows and macOS to play offline. No real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
 
 ## Games
 

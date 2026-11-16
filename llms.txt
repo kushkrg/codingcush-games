@@ -1,6 +1,6 @@
 # CodingCush Games
 
-> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). No download and no real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
+> Free games that run in the web browser, made with the Godot 4 engine by CodingCush (codingcush.com). Playable in the browser with nothing to install, or downloadable for Windows and macOS to play offline. No real-money purchases. A free account saves progress online and posts scores to a global leaderboard.
 
 ## Games
 

@@ -107,7 +107,7 @@ class GamesController
             'daily'     => $connected ? GamesData::daily(max($days, 7)) : [],
             'platforms' => $connected ? GamesData::platforms($days) : ['platform' => [], 'player' => []],
             'logins'    => $connected ? GamesData::logins($days) : ['logins' => [], 'signups' => []],
-            'pages'     => $connected ? GamesData::pages($days) : ['views' => [], 'clicks' => [], 'installs' => []],
+            'pages'     => $connected ? GamesData::pages($days) : ['views' => [], 'clicks' => [], 'installs' => [], 'downloads' => []],
             'levels'    => $connected ? GamesData::levels($game, $days) : [],
             'allTime'   => $connected ? GamesData::allTime() : [],
         ]);

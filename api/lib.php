@@ -21,7 +21,7 @@ const RUN_HOURS = 6;             // a run token is good for this long
 const BACKUP_KEEP = 14;          // daily database copies kept
 // Counters kept per day. 'login' is counted by the server itself (detail: google, facebook,
 // email, plus _new for a new account); the rest are sent by the game and the website.
-const EVENT_NAMES = ['session', 'signin', 'login', 'level_start', 'level_complete', 'level_fail', 'continue_used', 'install', 'page_view', 'play_click'];
+const EVENT_NAMES = ['session', 'signin', 'login', 'level_start', 'level_complete', 'level_fail', 'continue_used', 'install', 'page_view', 'play_click', 'download'];
 const EVENT_GAMES = ['hub'];     // besides the games in GAMES: counters for the website itself
 const MAX_EVENT_ROWS_PER_DAY = 2000;
 const MAX_ERROR_ROWS_PER_DAY = 200;

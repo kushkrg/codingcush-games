@@ -23,7 +23,7 @@ $kpis = [
     ['Active players', number_format($now['active']), '<span class="pa-kpi__trend pa-flat">accounts used in this period</span>'],
     ['App installs', number_format($now['installs']), gm_trend($now['installs'], $before['installs'], $days)],
     ['Website visits', number_format($now['page_views']), gm_trend($now['page_views'], $before['page_views'], $days)],
-    ['Play button clicks', number_format($now['play_clicks']), gm_trend($now['play_clicks'], $before['play_clicks'], $days)],
+    ['Downloads (Win + Mac)', number_format($now['downloads']), gm_trend($now['downloads'], $before['downloads'], $days)],
     ['Errors reported', number_format($now['errors']), $now['errors'] > 0 ? '<a class="pa-kpi__trend pa-down" href="' . url('admin/games/errors?days=' . $days) . '">see the reports →</a>' : '<span class="pa-kpi__trend pa-up">all clear</span>'],
 ];
 $site = $settings['site'];
