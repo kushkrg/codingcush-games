@@ -23,8 +23,9 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" as="image" href="/assets/vyomastra-800.webp" imagesrcset="/assets/vyomastra-480.webp 480w, /assets/vyomastra-800.webp 800w, /assets/vyomastra-1280.webp 1280w" imagesizes="(max-width: 820px) 94vw, 540px" fetchpriority="high">
-<style>:root{--bg:#070b1a;--panel:#0e1530;--line:#26335f;--text:#eef2ff;--muted:#a5b1d6;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
+<style>:root{--bg:#070b1a;--panel:rgba(14,21,48,.82);--line:#26335f;--text:#eef2ff;--muted:#b4bfdf;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
 *{box-sizing:border-box}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--text);font:17px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
  background-image:radial-gradient(900px 500px at 85% -10%,rgba(95,212,255,.15),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(140,90,255,.13),transparent 60%);background-repeat:no-repeat}
@@ -38,7 +39,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .brand span{color:var(--accent)}
 nav a{color:var(--muted);text-decoration:none;margin-left:20px;font-weight:600;font-size:15px;padding:8px 0;display:inline-block}
 nav a:hover{color:var(--text)}
-h1,h2,h3{line-height:1.15;margin:0;letter-spacing:.01em}
+h1,h2,h3{line-height:1.15;margin:0;letter-spacing:.01em;text-shadow:0 2px 18px rgba(4,8,24,.9)}
+.lead,.prose p,.crumbs{text-shadow:0 1px 10px rgba(4,8,24,.95)}
 h1{font-size:clamp(34px,5.6vw,60px);font-weight:800}
 h2{font-size:clamp(24px,3vw,30px);margin-bottom:16px}
 h3{font-size:20px}
@@ -96,6 +98,7 @@ footer a{color:var(--muted)}
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["VideoGame","WebApplication"],"@id":"https://games.codingcush.com/vyomastra/#game","name":"Vyomastra","url":"https://games.codingcush.com/vyomastra/","description":"Vyomastra is a free vertical space shooter that runs in the browser, with five weapons, boss fights, unlockable ships and a global leaderboard.","genre":["Shoot 'em up","Arcade"],"gamePlatform":"Web browser","applicationCategory":"GameApplication","operatingSystem":"Any (modern web browser)","playMode":"SinglePlayer","inLanguage":"en","image":"https://games.codingcush.com/assets/vyomastra-og.jpg","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@id":"https://codingcush.com/#org"},"publisher":{"@id":"https://codingcush.com/#org"},"dateModified":"2026-11-16"},{"@type":"Organization","@id":"https://codingcush.com/#org","name":"CodingCush","url":"https://codingcush.com/"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Games","item":"https://games.codingcush.com/"},{"@type":"ListItem","position":2,"name":"Vyomastra","item":"https://games.codingcush.com/vyomastra/"}]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Vyomastra?","acceptedAnswer":{"@type":"Answer","text":"Vyomastra is a free vertical space shooter that runs in the browser. You fly a fighter up the screen, shoot waves of enemy ships, collect weapon pick-ups, coins and diamonds, and fight a boss at the end of the level."}},{"@type":"Question","name":"Is Vyomastra free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Vyomastra is free to play and has no purchases with real money. Coins and diamonds are earned only by playing."}},{"@type":"Question","name":"How do I play Vyomastra?","acceptedAnswer":{"@type":"Answer","text":"On a phone, drag a finger to move and the ship fires by itself. On a computer, move the mouse and the ship follows it, and hold the left button to fire; or move with the arrow keys or W A S D, hold Space or J to fire, and press Esc or P to pause. A gamepad also works: left stick or D-pad to move and the A button to fire."}},{"@type":"Question","name":"How do I save my progress in Vyomastra?","acceptedAnswer":{"@type":"Answer","text":"Progress saves automatically in your browser. To keep it online and use it on another device, open Account in the game menu and create a free account with an email and password."}},{"@type":"Question","name":"How do I unlock new ships in Vyomastra?","acceptedAnswer":{"@type":"Answer","text":"Open Hangar in the game menu. Bulwark costs 1,200 coins and Wisp costs 20 diamonds. Coins drop from every enemy you destroy; diamonds come from bosses and from clearing a level for the first time."}},{"@type":"Question","name":"Can I play Vyomastra on a phone?","acceptedAnswer":{"@type":"Answer","text":"Yes. On a phone or tablet, drag a finger anywhere on the screen to move the ship; it fires automatically while your finger is down. Tap the pause button at the top to pause."}},{"@type":"Question","name":"How many levels does Vyomastra have?","acceptedAnswer":{"@type":"Answer","text":"Two levels are playable now: Low Orbit, with the Gatekeeper boss, and Rock Belt, an asteroid field with the Crusher boss. Eight levels are planned, and each one unlocks when you beat the level before it."}}]}]}</script>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
 <a class="skip" href="#main">Skip to content</a>
 <div class="wrap">
 <header class="top">
@@ -178,5 +181,50 @@ catch(e){one("The leaderboard is unavailable right now.")}})();</script>
 </main>
 <footer><span>© 2026 CodingCush. Free browser games made with the Godot engine.</span><span><a href="/">All games</a> · <a href="https://codingcush.com/">codingcush.com</a></span></footer>
 </div>
+<script>(function(){
+var c=document.getElementById("sky");if(!c||!c.getContext)return;
+var still=matchMedia("(prefers-reduced-motion: reduce)").matches,x=c.getContext("2d"),W,H,D,stars=[],gal,gs,left=0,clouds=0,t=0,mx=0,my=0,px=0,py=0,cx=-999,cy=-999,run=true;
+function rnd(a,b){return a+Math.random()*(b-a)}
+function galaxy(){ // drawn once into its own canvas, then only rotated: cheap on every frame
+ gs=Math.round(Math.min(Math.max(W,H)*1.15,1500)*D);gal=document.createElement("canvas");gal.width=gal.height=gs;
+ var g=gal.getContext("2d"),m=gs/2;
+ var core=g.createRadialGradient(m,m,0,m,m,m*.55);core.addColorStop(0,"rgba(255,240,215,.9)");core.addColorStop(.06,"rgba(255,205,160,.42)");core.addColorStop(.25,"rgba(130,110,255,.16)");core.addColorStop(.6,"rgba(70,100,255,.05)");core.addColorStop(1,"rgba(60,90,255,0)");
+ g.fillStyle=core;g.fillRect(0,0,gs,gs);g.globalCompositeOperation="lighter";left=W<700?3600:9000;clouds=70;paint();
+}
+function paint(){ // a slice per frame, so building the picture never makes the page stutter
+ var g=gal.getContext("2d"),m=gs/2,i,r,a,k,n=Math.min(left,500);
+ for(i=0;i<n;i++){k=Math.pow(Math.random(),.62);r=k*m*.96;a=(left-i)%2*3.1416+k*5.6+rnd(-.26,.26)*(1.15-k)+(Math.random()<.18?rnd(-1.2,1.2):0);
+  g.fillStyle="rgba("+Math.round(150+105*(1-k))+","+Math.round(170+50*(1-k))+",255,"+(0.3+Math.random()*.65).toFixed(2)+")";
+  var s=(Math.random()<.05?2.8:rnd(.8,1.9))*D;g.fillRect(m+Math.cos(a)*r+rnd(-9,9)*D*k,m+Math.sin(a)*r+rnd(-9,9)*D*k,s,s);}
+ left-=n;
+ for(i=0;i<6&&clouds>0;i++,clouds--){k=Math.pow(Math.random(),.7);r=k*m*.85;a=(clouds%2)*3.1416+k*5.6+rnd(-.15,.15);var bx=m+Math.cos(a)*r,by=m+Math.sin(a)*r,br=rnd(30,80)*D,c2=g.createRadialGradient(bx,by,0,bx,by,br);c2.addColorStop(0,clouds%3?"rgba(90,160,255,.16)":"rgba(255,110,190,.14)");c2.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=c2;g.fillRect(bx-br,by-br,br*2,br*2);}
+ if(left>0||clouds>0){if(still)draw();requestAnimationFrame(paint)}else if(still)draw();
+}
+function size(){D=Math.min(window.devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;
+ stars=[];var n=Math.min(260,Math.round(W*H/5200)),i;for(i=0;i<n;i++)stars.push({x:Math.random(),y:Math.random(),z:rnd(.2,1),p:rnd(0,6.3),s:rnd(.6,1.7)});galaxy();draw();}
+function draw(){
+ x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);
+ px+=(mx-px)*.05;py+=(my-py)*.05;
+ var gx=(W*(W<700?.5:.56)+px*-46)*D,gy=(H*.46+py*-32-scrollY*.1)*D,i,s,sx,sy,d,b;
+ x.save();x.translate(gx,gy);x.rotate(-.35);x.scale(1,.5);x.rotate(t*.03);x.globalAlpha=W<700?.6:.95;x.drawImage(gal,-gs/2,-gs/2);x.restore();
+ for(i=0;i<stars.length;i++){s=stars[i];
+  sx=((s.x*W+px*-70*s.z)%W+W)%W;sy=((s.y*H+py*-50*s.z-scrollY*.25*s.z)%H+H)%H;
+  d=Math.hypot(sx-cx,sy-cy);b=.35+.3*Math.sin(t*1.6+s.p)+(d<150?(1-d/150)*.9:0);
+  if(d<150){sx+=(sx-cx)/d*(150-d)*.12;sy+=(sy-cy)/d*(150-d)*.12}
+  x.globalAlpha=Math.min(1,b*s.z+.15);x.fillStyle=d<150?"#bfeaff":"#fff";var r=s.s*s.z*D*(d<150?1.5:1);x.fillRect(sx*D,sy*D,r,r);}
+ if(cx>-900){var h=x.createRadialGradient(cx*D,cy*D,0,cx*D,cy*D,190*D);h.addColorStop(0,"rgba(111,216,255,.11)");h.addColorStop(1,"rgba(111,216,255,0)");x.globalAlpha=1;x.fillStyle=h;x.fillRect((cx-190)*D,(cy-190)*D,380*D,380*D);}
+}
+function loop(){if(!run)return;t+=1/60;draw();requestAnimationFrame(loop)}
+function point(e){var p=e.touches?e.touches[0]:e;if(!p)return;cx=p.clientX;cy=p.clientY;mx=cx/W*2-1;my=cy/H*2-1;if(still)draw()}
+function start(){size();c.style.opacity=1;if(!still)requestAnimationFrame(loop);
+ addEventListener("pointermove",point,{passive:true});addEventListener("touchmove",point,{passive:true});
+ addEventListener("pointerleave",function(){cx=cy=-999});
+ var rt;addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(size,160)});
+ addEventListener("scroll",function(){if(still)draw()},{passive:true});
+ document.addEventListener("visibilitychange",function(){var was=run;run=!document.hidden;if(run&&!was&&!still)requestAnimationFrame(loop)});}
+// Wait until the page itself has finished loading, so the animation never delays the content.
+function later(){setTimeout(function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(start)},600)}
+if(document.readyState==="complete")later();else addEventListener("load",later);
+})();</script>
 </body>
 </html>
