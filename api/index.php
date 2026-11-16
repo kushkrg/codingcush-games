@@ -187,6 +187,7 @@ switch ($action) {
         if ($data === false || strlen($data) > MAX_SAVE_BYTES) {
             fail(413, 'The save is too large.');
         }
+        store_photo($db, $userId, $in['save']['photo'] ?? '');
         $db->beginTransaction();
         $query = $db->prepare('SELECT user_id FROM games_saves WHERE user_id = ? AND game = ?');
         $query->execute([$userId, $game]);
@@ -207,9 +208,12 @@ switch ($action) {
         $game = game_id($_GET['game'] ?? '');
         $level = (int) ($_GET['level'] ?? 1);
         $limit = max(1, min(50, (int) ($_GET['limit'] ?? 20)));
-        $query = $db->prepare("SELECT s.name, s.ship, s.score, u.username FROM games_scores s LEFT JOIN games_users u ON u.id = s.user_id WHERE s.game = ? AND s.level = ? ORDER BY s.score DESC, s.updated_at ASC LIMIT $limit");
+        // Photos are only sent when asked for (the game asks; the website's small board does not).
+        $photos = ($_GET['photos'] ?? '') === '1';
+        $query = $db->prepare("SELECT s.name, s.ship, s.score, u.username, u.photo FROM games_scores s LEFT JOIN games_users u ON u.id = s.user_id WHERE s.game = ? AND s.level = ? ORDER BY s.score DESC, s.updated_at ASC LIMIT $limit");
         $query->execute([$game, $level]);
-        $rows = array_map(fn(array $row): array => ['name' => $row['name'], 'username' => (string) $row['username'], 'ship' => $row['ship'], 'score' => (int) $row['score']], $query->fetchAll());
+        $rows = array_map(fn(array $row): array => ['name' => $row['name'], 'username' => (string) $row['username'], 'ship' => $row['ship'], 'score' => (int) $row['score']]
+            + ($photos ? ['photo' => (string) $row['photo']] : []), $query->fetchAll());
         reply(200, ['scores' => $rows]);
 
     case 'score_put':

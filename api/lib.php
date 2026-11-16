@@ -70,6 +70,7 @@ function open_database(): PDO
     if (isset($config['dsn'])) {
         $db = new PDO($config['dsn'], $config['user'] ?? null, $config['password'] ?? null, $options);
         add_usernames($db);
+        add_photos($db);
         return $db;
     }
     $folder = data_folder();
@@ -83,6 +84,7 @@ function open_database(): PDO
     $db->exec('CREATE INDEX IF NOT EXISTS games_scores_board ON games_scores (game, level, score)');
     $db->exec('CREATE TABLE IF NOT EXISTS games_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, address TEXT NOT NULL, made_at INTEGER NOT NULL)');
     add_usernames($db);
+    add_photos($db);
     return $db;
 }
 
@@ -90,6 +92,35 @@ function open_database(): PDO
  * Usernames were added after launch: on a database made before that, add the column
  * and give every existing player one. Does nothing once the column exists.
  */
+/** Profile photos shown on the leaderboard live in their own column; add it to an older database. */
+function add_photos(PDO $db): void
+{
+    try {
+        $db->query('SELECT photo FROM games_users LIMIT 1');
+        return;
+    } catch (PDOException $missing) {
+        $db->exec('ALTER TABLE games_users ADD COLUMN photo TEXT');
+    }
+    // Photos already saved inside cloud saves before this column existed.
+    foreach ($db->query('SELECT user_id, data FROM games_saves')->fetchAll() as $row) {
+        $save = json_decode($row['data'], true);
+        store_photo($db, (int) $row['user_id'], is_array($save) ? ($save['photo'] ?? '') : '');
+    }
+}
+
+/** Keeps a player's photo (a small base64 JPEG) for the leaderboard, or clears it. Anything else is ignored. */
+function store_photo(PDO $db, int $userId, mixed $photo): void
+{
+    $clean = null;
+    if (is_string($photo) && $photo !== '' && strlen($photo) <= 40000) {
+        $bytes = base64_decode($photo, true);
+        if ($bytes !== false && str_starts_with($bytes, "\xFF\xD8\xFF")) {
+            $clean = $photo;
+        }
+    }
+    $db->prepare('UPDATE games_users SET photo = ? WHERE id = ?')->execute([$clean, $userId]);
+}
+
 function add_usernames(PDO $db): void
 {
     try {
