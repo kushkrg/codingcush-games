@@ -19,7 +19,10 @@ const GAMES = [
 ];
 const RUN_HOURS = 6;             // a run token is good for this long
 const BACKUP_KEEP = 14;          // daily database copies kept
-const EVENT_NAMES = ['session', 'signin', 'level_start', 'level_complete', 'level_fail', 'continue_used'];
+// Counters kept per day. 'login' is counted by the server itself (detail: google, facebook,
+// email, plus _new for a new account); the rest are sent by the game and the website.
+const EVENT_NAMES = ['session', 'signin', 'login', 'level_start', 'level_complete', 'level_fail', 'continue_used', 'install', 'page_view', 'play_click'];
+const EVENT_GAMES = ['hub'];     // besides the games in GAMES: counters for the website itself
 const MAX_EVENT_ROWS_PER_DAY = 2000;
 const MAX_ERROR_ROWS_PER_DAY = 200;
 
@@ -90,6 +93,7 @@ function open_database(): PDO
         add_usernames($db);
         add_photos($db);
         add_later_tables($db);
+        settings($db, true);
         return $db;
     }
     $folder = data_folder();
@@ -105,6 +109,7 @@ function open_database(): PDO
     add_usernames($db);
     add_photos($db);
     add_later_tables($db);
+    settings($db, true);
     maybe_backup($db, $folder);
     return $db;
 }
@@ -118,11 +123,64 @@ function add_later_tables(PDO $db): void
     $db->exec('CREATE TABLE IF NOT EXISTS games_runs (token_hash CHAR(64) NOT NULL PRIMARY KEY, user_id INTEGER NOT NULL, game VARCHAR(32) NOT NULL, level INTEGER NOT NULL, started_at INTEGER NOT NULL)');
     $db->exec('CREATE TABLE IF NOT EXISTS games_events (day CHAR(10) NOT NULL, game VARCHAR(32) NOT NULL, name VARCHAR(32) NOT NULL, level INTEGER NOT NULL, detail VARCHAR(16) NOT NULL, total INTEGER NOT NULL, PRIMARY KEY (day, game, name, level, detail))');
     $db->exec('CREATE TABLE IF NOT EXISTS games_errors (day CHAR(10) NOT NULL, hash CHAR(40) NOT NULL, message TEXT NOT NULL, place VARCHAR(160) NOT NULL, version VARCHAR(16) NOT NULL, total INTEGER NOT NULL, last_at INTEGER NOT NULL, PRIMARY KEY (day, hash))');
-    try {
-        $db->query('SELECT banned FROM games_users LIMIT 1');
-    } catch (PDOException $missing) {
-        $db->exec('ALTER TABLE games_users ADD COLUMN banned INTEGER NOT NULL DEFAULT 0');
+    $db->exec('CREATE TABLE IF NOT EXISTS games_settings (name VARCHAR(64) NOT NULL PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)');
+    foreach (['banned INTEGER NOT NULL DEFAULT 0', "signup_via VARCHAR(16) NOT NULL DEFAULT ''", 'last_seen INTEGER NOT NULL DEFAULT 0'] as $column) {
+        $name = strtok($column, ' ');
+        try {
+            $db->query("SELECT $name FROM games_users LIMIT 1");
+        } catch (PDOException $missing) {
+            $db->exec("ALTER TABLE games_users ADD COLUMN $column");
+        }
     }
+}
+
+/**
+ * Settings changed from the CodingCush admin panel (Admin > Games), stored as JSON by name.
+ * Read once per request. Missing or unreadable values fall back to the defaults below.
+ */
+const SETTING_DEFAULTS = [
+    'site' => ['notice' => '', 'notice_link' => '', 'notice_tone' => 'info', 'maintenance' => false, 'maintenance_message' => '', 'signups_open' => true, 'extra_admins' => []],
+    'game.vyomastra' => ['status' => 'live', 'notice' => '', 'coin_boost' => 1.0, 'boost_until' => 0, 'continue_cost' => 2, 'continue_lives' => 3, 'scores_open' => true],
+];
+
+function settings(?PDO $db = null, bool $fresh = false): array
+{
+    static $cache = null;
+    if ($cache !== null && !$fresh) {
+        return $cache;
+    }
+    $cache = SETTING_DEFAULTS;
+    if ($db === null) {
+        return $cache;
+    }
+    try {
+        foreach ($db->query('SELECT name, value FROM games_settings')->fetchAll() as $row) {
+            $value = json_decode((string) $row['value'], true);
+            if (is_array($value) && isset(SETTING_DEFAULTS[$row['name']])) {
+                $cache[$row['name']] = array_merge(SETTING_DEFAULTS[$row['name']], $value);
+            }
+        }
+    } catch (PDOException $missing) {
+        // Table not there yet: defaults.
+    }
+    return $cache;
+}
+
+/** One game's live settings, with an expired coin boost switched back to 1. */
+function game_settings(string $game): array
+{
+    $all = settings();
+    $mine = $all['game.' . $game] ?? SETTING_DEFAULTS['game.vyomastra'];
+    if ((int) $mine['boost_until'] > 0 && (int) $mine['boost_until'] < time()) {
+        $mine['coin_boost'] = 1.0;
+    }
+    return $mine;
+}
+
+/** Marks a player as seen now; at most one write an hour per player. */
+function note_seen(PDO $db, int $userId): void
+{
+    $db->prepare('UPDATE games_users SET last_seen = ? WHERE id = ? AND last_seen < ?')->execute([time(), $userId, time() - 3600]);
 }
 
 /**
@@ -184,7 +242,8 @@ function forget_board_cache(string $game, int $level = 0): void
 /** Adds one to a named counter for today. Unknown names and odd details are dropped. */
 function count_event(PDO $db, string $game, string $name, int $level, string $detail): void
 {
-    if (!in_array($name, EVENT_NAMES, true) || !preg_match('/^[a-z0-9_]{0,16}$/', $detail) || $level < 0 || $level > 99) {
+    if (!in_array($name, EVENT_NAMES, true) || !preg_match('/^[a-z0-9_]{0,16}$/', $detail) || $level < 0 || $level > 99
+        || !(isset(GAMES[$game]) || in_array($game, EVENT_GAMES, true))) {
         return;
     }
     $day = gmdate('Y-m-d');
@@ -289,7 +348,9 @@ const ADMIN_USERNAMES = ['kushkrg'];
 function is_admin(string $username): bool
 {
     $extra = site_config()['admins'] ?? [];
-    return $username !== '' && in_array($username, array_merge(ADMIN_USERNAMES, is_array($extra) ? $extra : []), true);
+    $fromPanel = settings()['site']['extra_admins'] ?? [];
+    $all = array_merge(ADMIN_USERNAMES, is_array($extra) ? $extra : [], is_array($fromPanel) ? $fromPanel : []);
+    return $username !== '' && in_array($username, $all, true);
 }
 
 const USERNAME_PATTERN = '/^[a-z][a-z0-9_]{2,15}$/';
@@ -332,11 +393,11 @@ function free_username(PDO $db, string $hint): string
 }
 
 /** Adds a player and returns their id. */
-function create_user(PDO $db, string $email, string $passHash, string $name): int
+function create_user(PDO $db, string $email, string $passHash, string $name, string $via = 'email'): int
 {
     $hint = clean_name($name) === 'PILOT' ? (string) strstr($email, '@', true) : $name;
-    $db->prepare('INSERT INTO games_users (email, pass_hash, name, created_at, username) VALUES (?, ?, ?, ?, ?)')
-        ->execute([$email, $passHash, clean_name($name), time(), free_username($db, $hint)]);
+    $db->prepare('INSERT INTO games_users (email, pass_hash, name, created_at, username, signup_via, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$email, $passHash, clean_name($name), time(), free_username($db, $hint), $via, time()]);
     return (int) $db->lastInsertId();
 }
 

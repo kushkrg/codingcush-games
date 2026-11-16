@@ -138,7 +138,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":9612780,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":9615564,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -266,7 +266,7 @@ const engine = new Engine(GODOT_CONFIG);
 // Reports errors to the site so they can be fixed: the message and where it happened,
 // nothing about the player. At most five a visit.
 (function () {
-	var sent = 0, version = '1.10.1';
+	var sent = 0, version = '1.11.0';
 	function report(message, place) {
 		if (sent >= 5 || !message) { return; }
 		sent += 1;
@@ -286,6 +286,10 @@ const engine = new Engine(GODOT_CONFIG);
 		return original.apply(console, arguments);
 	};
 })();
+// Counts an install (anonymous), like the website pages do.
+window.addEventListener('appinstalled', function () {
+	try { navigator.sendBeacon('/api/index.php?action=event', new Blob([JSON.stringify({ game: 'hub', name: 'install', level: 0, detail: 'vyomastra_play' })], { type: 'text/plain' })); } catch (e) {}
+});
 // Lets the game be installed like an app and opened again without a connection.
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
 	window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });

@@ -148,8 +148,14 @@ $query->execute([$email]);
 $user = $query->fetch();
 if ($user) {
     $userId = (int) $user['id'];
+    note_seen($db, $userId);
+    count_event($db, 'vyomastra', 'login', 0, $name);
 } else {
+    if (!settings()['site']['signups_open']) {
+        give_up($back, 'New accounts are paused for a while. You can still play without one.');
+    }
     // No password is ever set for this account: the stored hash is of random bytes nobody knows.
-    $userId = create_user($db, $email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), (string) ($person['name'] ?? ''));
+    $userId = create_user($db, $email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), (string) ($person['name'] ?? ''), $name);
+    count_event($db, 'vyomastra', 'login', 0, $name . '_new');
 }
 finish($back, ['vy_token' => start_session($db, $userId), 'vy_email' => $email]);

@@ -9,6 +9,9 @@ OUT = Path(__file__).resolve().parent.parent
 TODAY = date.today().isoformat()
 
 CSS = """
+.notice{display:block;position:relative;z-index:3;text-align:center;padding:10px 16px;font:600 14px/1.4 system-ui,sans-serif;color:#06131f;text-decoration:none}
+.notice-info{background:#6fd8ff}.notice-good{background:#7ef0b0}.notice-warn{background:#ffcf5a}
+a.notice:hover{text-decoration:underline}
 :root{--bg:#070b1a;--panel:rgba(14,21,48,.82);--line:#26335f;--text:#eef2ff;--muted:#b4bfdf;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
 *{box-sizing:border-box}
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s}
@@ -144,6 +147,40 @@ if(document.readyState==="complete")later();else addEventListener("load",later);
 ORG = {"@type": "Organization", "@id": "https://codingcush.com/#org", "name": "CodingCush", "url": "https://codingcush.com/"}
 
 
+# Every page: counts the visit (anonymous, once per page per browser tab), counts clicks on
+# Play and app installs, and shows the notice or maintenance message set in Admin > Games.
+LIVE_JS = r"""
+(function () {
+  var where = location.pathname.replace(/^\/|\/$/g, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase().slice(0, 16) || 'home';
+  function send(name, detail) {
+    try {
+      var body = JSON.stringify({ game: 'hub', name: name, level: 0, detail: detail });
+      if (navigator.sendBeacon) { navigator.sendBeacon('/api/index.php?action=event', new Blob([body], { type: 'text/plain' })); }
+    } catch (e) { /* counting must never get in the way */ }
+  }
+  try {
+    if (!sessionStorage.getItem('vy_seen_' + where)) { sessionStorage.setItem('vy_seen_' + where, '1'); send('page_view', where); }
+  } catch (e) { send('page_view', where); }
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href*="/play/"]');
+    if (link) { send('play_click', where); }
+  });
+  window.addEventListener('appinstalled', function () { send('install', 'hub'); });
+  fetch('/api/index.php?action=site_config').then(function (r) { return r.json(); }).then(function (c) {
+    var text = '', link = '', tone = 'info';
+    if (c.maintenance && c.maintenance.on) { text = c.maintenance.message || 'The games are being updated. Please check back in a little while.'; tone = 'warn'; }
+    else if (c.notice && c.notice.text) { text = c.notice.text; link = c.notice.link || ''; tone = c.notice.tone || 'info'; }
+    if (!text) { return; }
+    var bar = document.createElement(link ? 'a' : 'div');
+    bar.className = 'notice notice-' + (/^(info|good|warn)$/.test(tone) ? tone : 'info');
+    bar.textContent = text;
+    if (link && /^(https?:)?\//.test(link)) { bar.href = link; }
+    document.body.insertBefore(bar, document.body.firstChild.nextSibling);
+  }).catch(function () {});
+})();
+"""
+
+
 def page(path, title, description, body, schema, preload=""):
     url = SITE + path
     graph = json.dumps({"@context": "https://schema.org", "@graph": schema}, ensure_ascii=False, separators=(",", ":"))
@@ -188,6 +225,7 @@ def page(path, title, description, body, schema, preload=""):
 <footer><span>© {date.today().year} CodingCush. Free browser games made with the Godot engine.</span><span><a href="/">All games</a> · <a href="/privacy/">Privacy</a> · <a href="https://codingcush.com/">codingcush.com</a></span></footer>
 </div>
 <script>{SKY_JS.strip()}</script>
+<script>{LIVE_JS.strip()}</script>
 </body>
 </html>
 """
@@ -388,6 +426,7 @@ PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games<
   <p>If you choose "Continue with Google" or "Continue with Facebook", that company asks your permission and then gives us your <b>email address</b> and your <b>name</b>. We use the email to find or create your account and the name only to set your starting pilot name. We do not receive your password, friends list, photos or posts, and we never post anything on your behalf. Signing in with the same email by another method opens the same account.</p>
 
   <h2>Backups</h2>
+  <p>We also note when an account was last used (to the hour), so inactive accounts can be told apart.</p>
   <p>Once a day we keep a copy of the database so that accounts and progress can be restored after a fault. Copies are kept for 14 days and then deleted, so a deleted account can remain in a backup for up to 14 days.</p>
 
   <h2>Security records</h2>
@@ -397,7 +436,7 @@ PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games<
   <p>We do not use advertising or tracking cookies. During a Google or Facebook sign-in, one short-lived cookie (about 10 minutes) checks that the reply really belongs to your sign-in. Games keep their save data and your sign-in in your browser's storage.</p>
 
   <h2>Usage counts and error reports</h2>
-  <p>To see which missions are too hard and to fix bugs, the games send us two kinds of anonymous information. First, <b>counts</b>: that a visit happened, a mission was started, won or lost (and roughly when), or a continue was used. These are added to a daily total and are not linked to your account, device or IP address. Second, <b>error reports</b>: if the game hits an error in your browser, the text of the error, the file and line it came from and the game version are sent. Neither contains your name, email or progress.</p>
+  <p>To see which missions are too hard and to fix bugs, the games send us two kinds of anonymous information. First, <b>counts</b>: that a page or a game was opened (and whether in a browser or as an installed app, and whether signed in), that Play was pressed, that the game was installed, that someone signed in (and with which method), or that a mission was started, won or lost (and roughly when), or a continue was used. These are added to a daily total and are not linked to your account, device or IP address. Second, <b>error reports</b>: if the game hits an error in your browser, the text of the error, the file and line it came from and the game version are sent. Neither contains your name, email or progress.</p>
 
   <h2>Advertising and third-party analytics</h2>
   <p>This site currently shows no ads and uses no third-party analytics or tracking scripts. If that changes, this page will be updated first.</p>
@@ -424,154 +463,14 @@ PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games<
     "What CodingCush Games stores when you play as a guest or with an account, how Google and Facebook sign-in is used, and how to delete your account and data.",
     PRIVACY_BODY, [ORG, {"@type": "WebPage", "@id": SITE + "/privacy/", "url": SITE + "/privacy/", "name": "Privacy policy", "isPartOf": {"@id": SITE + "/#website"}, "dateModified": TODAY}]))
 
-ADMIN_CSS = """<style>
-.adm input,.adm select{background:#0b1230;border:1px solid var(--line);color:var(--text);padding:11px 13px;border-radius:10px;font:inherit;min-width:0}
-.adm button{background:#16224d;border:1px solid var(--line);color:var(--text);padding:11px 16px;border-radius:10px;font:inherit;font-weight:700;cursor:pointer}
-.adm button.go{background:linear-gradient(180deg,#8fe4ff,#45b4ee);color:#04121f;border:0}
-.adm button.bad{border-color:#a8404a;color:#ffb3b8}
-.adm .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
-.adm .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0}
-.adm .num{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
-.adm .num b{display:block;font-size:28px}
-.adm .num span{color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
-.adm td,.adm th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-.adm th{color:var(--muted);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
-.adm td.n{text-align:right;font-variant-numeric:tabular-nums}
-.adm .scroll{overflow-x:auto}
-.adm #say{color:#ffd66b;min-height:1.4em}
-.adm code{word-break:break-word}
-</style>"""
-
-ADMIN_JS = r"""
-(function () {
-  var API = '/api/index.php?action=', key = 'vy_admin_token';
-  var $ = function (id) { return document.getElementById(id); };
-  var token = sessionStorage.getItem(key) || '';
-  // Coming back from Google or Facebook: the session is in the address after the #.
-  if (location.hash.indexOf('vy_') > 0) {
-    var got = new URLSearchParams(location.hash.slice(1));
-    if (got.get('vy_token')) { token = got.get('vy_token'); sessionStorage.setItem(key, token); }
-    if (got.get('vy_error')) { say(got.get('vy_error')); }
-    history.replaceState(null, '', location.pathname);
-  }
-  function say(text) { $('say').textContent = text || ''; }
-  function call(action, body) {
-    var options = { headers: { 'Authorization': 'Bearer ' + token } };
-    if (body) { options.method = 'POST'; options.body = JSON.stringify(body); options.headers['Content-Type'] = 'application/json'; }
-    return fetch(API + action, options).then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error(j.message || ('Error ' + r.status)); } return j; }); });
-  }
-  function cell(row, text, cls) { var td = document.createElement('td'); td.textContent = text; if (cls) { td.className = cls; } row.appendChild(td); return td; }
-  function fill(id, rows, make) { var body = $(id); body.textContent = ''; rows.forEach(function (item) { var tr = document.createElement('tr'); make(tr, item); body.appendChild(tr); }); }
-
-  function load() {
-    call('admin_stats').then(function (data) {
-      $('gate').hidden = true; $('panel').hidden = false; say('');
-      $('n-players').textContent = data.players; $('n-scores').textContent = data.scores; $('n-banned').textContent = data.banned;
-      $('n-backups').textContent = data.backups.length; $('last-backup').textContent = data.backups.length ? data.backups[data.backups.length - 1] : 'none yet';
-      // One line per mission: how many started, finished, failed and paid to continue in the last 14 days.
-      var levels = {}, fails = {}, sessions = 0, signins = 0;
-      data.events.forEach(function (e) {
-        if (e.name === 'session') { sessions += e.total; return; }
-        if (e.name === 'signin') { signins += e.total; return; }
-        var L = levels[e.level] = levels[e.level] || { level_start: 0, level_complete: 0, level_fail: 0, continue_used: 0 };
-        L[e.name] += e.total;
-        if (e.name === 'level_fail') { var k = e.level + '|' + e.detail; fails[k] = (fails[k] || 0) + e.total; }
-      });
-      $('n-sessions').textContent = sessions; $('n-signins').textContent = signins;
-      fill('levels', Object.keys(levels).sort(function (a, b) { return a - b; }), function (tr, level) {
-        var L = levels[level];
-        cell(tr, 'Mission ' + level); cell(tr, L.level_start, 'n'); cell(tr, L.level_complete, 'n'); cell(tr, L.level_fail, 'n');
-        cell(tr, L.level_start ? Math.round(L.level_complete / L.level_start * 100) + '%' : '-', 'n'); cell(tr, L.continue_used, 'n');
-      });
-      fill('fails', Object.keys(fails).sort(function (a, b) { return fails[b] - fails[a]; }).slice(0, 30), function (tr, k) {
-        var parts = k.split('|'), bits = parts[1].split('_');
-        var when = bits[1] === 'boss' ? 'at the boss' : 'in the waves, ' + (parseInt(bits[1].slice(1), 10) * 20) + 's to ' + (parseInt(bits[1].slice(1), 10) * 20 + 20) + 's';
-        cell(tr, 'Mission ' + parts[0]); cell(tr, { ship: 'Ship destroyed', cargo: 'Cargo lost', line: 'Line broken' }[bits[0]] || bits[0]); cell(tr, when); cell(tr, fails[k], 'n');
-      });
-      fill('errors', data.errors, function (tr, e) {
-        cell(tr, e.day); cell(tr, e.total, 'n'); cell(tr, e.version || '-'); cell(tr, e.place); cell(tr, e.message);
-      });
-    }).catch(function (error) {
-      $('panel').hidden = true; $('gate').hidden = false;
-      if (token) { say(error.message); }
-    });
-  }
-
-  $('login').addEventListener('submit', function (event) {
-    event.preventDefault(); say('Signing in...');
-    fetch(API + 'login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: $('email').value, password: $('password').value }) })
-      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error(j.message); } return j; }); })
-      .then(function (j) { token = j.token; sessionStorage.setItem(key, token); $('password').value = ''; load(); })
-      .catch(function (error) { say(error.message); });
-  });
-  $('out').addEventListener('click', function () { call('logout', {}).catch(function () {}); token = ''; sessionStorage.removeItem(key); $('panel').hidden = true; $('gate').hidden = false; });
-
-  function player() { return $('who').value.trim().replace(/^@/, '').toLowerCase(); }
-  function show(data) {
-    $('found').hidden = false;
-    $('found-text').textContent = '@' + data.username + '  ·  ' + data.name + '  ·  ' + data.email + (data.banned ? '  ·  BANNED' : '');
-    $('ban').textContent = data.banned ? 'Unban' : 'Ban'; $('ban').dataset.banned = data.banned ? '1' : '';
-    fill('found-scores', data.scores, function (tr, s) { cell(tr, 'Mission ' + s.level); cell(tr, s.score, 'n'); cell(tr, new Date(s.updated_at * 1000).toISOString().slice(0, 10)); });
-  }
-  function lookup() { say(''); call('admin_player&username=' + encodeURIComponent(player())).then(show).catch(function (error) { $('found').hidden = true; say(error.message); }); }
-  $('find').addEventListener('submit', function (event) { event.preventDefault(); lookup(); });
-  $('wipe').addEventListener('click', function () {
-    var level = parseInt($('wipe-level').value, 10) || 0;
-    if (!confirm('Remove ' + (level ? 'the mission ' + level + ' score' : 'ALL scores') + ' of @' + player() + '? This cannot be undone.')) { return; }
-    call('admin_score_delete', { username: player(), level: level }).then(function (j) { lookup(); load(); say(j.removed + ' score(s) removed.'); }).catch(function (error) { say(error.message); });
-  });
-  $('photo').addEventListener('click', function () {
-    if (!confirm('Remove the profile photo of @' + player() + '?')) { return; }
-    call('admin_photo_clear', { username: player() }).then(function () { say('Photo removed.'); }).catch(function (error) { say(error.message); });
-  });
-  $('ban').addEventListener('click', function () {
-    var banning = !$('ban').dataset.banned;
-    if (banning && !confirm('Ban @' + player() + '? Their scores and photo are removed and they can post no new scores.')) { return; }
-    call('admin_ban', { username: player(), banned: banning }).then(function () { lookup(); load(); say(banning ? 'Banned.' : 'Unbanned.'); }).catch(function (error) { say(error.message); });
-  });
-  if (token) { load(); }
-})();
-"""
-
-ADMIN_BODY = ADMIN_CSS + """<section class="adm" aria-labelledby="adm-h">
-  <h1 id="adm-h">Admin</h1>
-  <p id="say" role="status"></p>
-  <div id="gate">
-    <p class="lead">Sign in with an admin account.</p>
-    <div class="row"><a class="btn" href="/api/oauth.php?provider=google&amp;back=/admin/">Continue with Google</a><a class="btn ghost" href="/api/oauth.php?provider=facebook&amp;back=/admin/">Continue with Facebook</a></div>
-    <form id="login" class="row"><input id="email" type="email" placeholder="Email" autocomplete="username" required><input id="password" type="password" placeholder="Password" autocomplete="current-password" required><button class="go">Sign in</button></form>
-  </div>
-  <div id="panel" hidden>
-    <div class="row"><button id="out">Sign out</button></div>
-    <div class="nums">
-      <div class="num"><b id="n-players">0</b><span>Accounts</span></div>
-      <div class="num"><b id="n-scores">0</b><span>Scores</span></div>
-      <div class="num"><b id="n-sessions">0</b><span>Visits, 14 days</span></div>
-      <div class="num"><b id="n-signins">0</b><span>Sign-ins, 14 days</span></div>
-      <div class="num"><b id="n-banned">0</b><span>Banned</span></div>
-      <div class="num"><b id="n-backups">0</b><span>Backups kept</span></div>
-    </div>
-    <p>Latest backup: <code id="last-backup"></code></p>
-    <h2>Missions, last 14 days</h2>
-    <div class="scroll"><table><thead><tr><th>Mission</th><th>Started</th><th>Completed</th><th>Failed</th><th>Win rate</th><th>Continues bought</th></tr></thead><tbody id="levels"></tbody></table></div>
-    <h2>Where runs end</h2>
-    <div class="scroll"><table><thead><tr><th>Mission</th><th>Why</th><th>When</th><th>Times</th></tr></thead><tbody id="fails"></tbody></table></div>
-    <h2>Player</h2>
-    <form id="find" class="row"><input id="who" placeholder="@username" required><button class="go">Look up</button></form>
-    <div id="found" hidden>
-      <p id="found-text"></p>
-      <div class="scroll"><table><thead><tr><th>Mission</th><th>Score</th><th>Date</th></tr></thead><tbody id="found-scores"></tbody></table></div>
-      <div class="row"><select id="wipe-level"><option value="0">All missions</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select><button id="wipe" class="bad" type="button">Remove score</button><button id="photo" class="bad" type="button">Remove photo</button><button id="ban" class="bad" type="button">Ban</button></div>
-    </div>
-    <h2>Errors reported by players' browsers</h2>
-    <div class="scroll"><table><thead><tr><th>Day</th><th>Times</th><th>Version</th><th>Where</th><th>Message</th></tr></thead><tbody id="errors"></tbody></table></div>
-  </div>
-</section>
-<script>""" + ADMIN_JS.strip() + """</script>"""
-
 (OUT / "admin").mkdir(parents=True, exist_ok=True)
-(OUT / "admin" / "index.html").write_text(page("/admin/", "Admin | CodingCush Games", "Admin tools for CodingCush Games.", ADMIN_BODY, [ORG])
-    .replace("index, follow, max-image-preview:large", "noindex, nofollow"))
+# The admin tools now live in the CodingCush admin panel (Admin > Games); this address points there.
+ADMIN_HOME = "https://codingcush.com/admin/games"
+(OUT / "admin" / "index.html").write_text(f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta http-equiv="refresh" content="0; url={ADMIN_HOME}"><title>Admin moved | CodingCush Games</title></head>
+<body><p>The games admin is now in the CodingCush admin panel: <a href="{ADMIN_HOME}">{ADMIN_HOME}</a></p></body></html>
+""")
 
 (OUT / "404.html").write_text(page("/404.html", "Page not found | CodingCush Games", "This page does not exist.",
     '<section><h1>Page not found</h1><p class="lead">That page does not exist. The games are on the home page.</p><a class="btn" href="/">All games</a></section>', [ORG]).replace("index, follow, max-image-preview:large", "noindex"))

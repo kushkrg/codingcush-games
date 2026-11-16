@@ -22,7 +22,10 @@
 <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<style>:root{--bg:#070b1a;--panel:rgba(14,21,48,.82);--line:#26335f;--text:#eef2ff;--muted:#b4bfdf;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
+<style>.notice{display:block;position:relative;z-index:3;text-align:center;padding:10px 16px;font:600 14px/1.4 system-ui,sans-serif;color:#06131f;text-decoration:none}
+.notice-info{background:#6fd8ff}.notice-good{background:#7ef0b0}.notice-warn{background:#ffcf5a}
+a.notice:hover{text-decoration:underline}
+:root{--bg:#070b1a;--panel:rgba(14,21,48,.82);--line:#26335f;--text:#eef2ff;--muted:#b4bfdf;--accent:#6fd8ff;--gold:#ffd166;--radius:18px}
 *{box-sizing:border-box}
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s}
 html{scroll-behavior:smooth}
@@ -130,6 +133,7 @@ footer a{color:var(--muted)}
   <p>If you choose "Continue with Google" or "Continue with Facebook", that company asks your permission and then gives us your <b>email address</b> and your <b>name</b>. We use the email to find or create your account and the name only to set your starting pilot name. We do not receive your password, friends list, photos or posts, and we never post anything on your behalf. Signing in with the same email by another method opens the same account.</p>
 
   <h2>Backups</h2>
+  <p>We also note when an account was last used (to the hour), so inactive accounts can be told apart.</p>
   <p>Once a day we keep a copy of the database so that accounts and progress can be restored after a fault. Copies are kept for 14 days and then deleted, so a deleted account can remain in a backup for up to 14 days.</p>
 
   <h2>Security records</h2>
@@ -139,7 +143,7 @@ footer a{color:var(--muted)}
   <p>We do not use advertising or tracking cookies. During a Google or Facebook sign-in, one short-lived cookie (about 10 minutes) checks that the reply really belongs to your sign-in. Games keep their save data and your sign-in in your browser's storage.</p>
 
   <h2>Usage counts and error reports</h2>
-  <p>To see which missions are too hard and to fix bugs, the games send us two kinds of anonymous information. First, <b>counts</b>: that a visit happened, a mission was started, won or lost (and roughly when), or a continue was used. These are added to a daily total and are not linked to your account, device or IP address. Second, <b>error reports</b>: if the game hits an error in your browser, the text of the error, the file and line it came from and the game version are sent. Neither contains your name, email or progress.</p>
+  <p>To see which missions are too hard and to fix bugs, the games send us two kinds of anonymous information. First, <b>counts</b>: that a page or a game was opened (and whether in a browser or as an installed app, and whether signed in), that Play was pressed, that the game was installed, that someone signed in (and with which method), or that a mission was started, won or lost (and roughly when), or a continue was used. These are added to a daily total and are not linked to your account, device or IP address. Second, <b>error reports</b>: if the game hits an error in your browser, the text of the error, the file and line it came from and the game version are sent. Neither contains your name, email or progress.</p>
 
   <h2>Advertising and third-party analytics</h2>
   <p>This site currently shows no ads and uses no third-party analytics or tracking scripts. If that changes, this page will be updated first.</p>
@@ -207,6 +211,34 @@ function start(){size();c.style.opacity=1;if(!still)requestAnimationFrame(loop);
 // Wait until the page itself has finished loading, so the animation never delays the content.
 function later(){setTimeout(function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(start)},600)}
 if(document.readyState==="complete")later();else addEventListener("load",later);
+})();</script>
+<script>(function () {
+  var where = location.pathname.replace(/^\/|\/$/g, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase().slice(0, 16) || 'home';
+  function send(name, detail) {
+    try {
+      var body = JSON.stringify({ game: 'hub', name: name, level: 0, detail: detail });
+      if (navigator.sendBeacon) { navigator.sendBeacon('/api/index.php?action=event', new Blob([body], { type: 'text/plain' })); }
+    } catch (e) { /* counting must never get in the way */ }
+  }
+  try {
+    if (!sessionStorage.getItem('vy_seen_' + where)) { sessionStorage.setItem('vy_seen_' + where, '1'); send('page_view', where); }
+  } catch (e) { send('page_view', where); }
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href*="/play/"]');
+    if (link) { send('play_click', where); }
+  });
+  window.addEventListener('appinstalled', function () { send('install', 'hub'); });
+  fetch('/api/index.php?action=site_config').then(function (r) { return r.json(); }).then(function (c) {
+    var text = '', link = '', tone = 'info';
+    if (c.maintenance && c.maintenance.on) { text = c.maintenance.message || 'The games are being updated. Please check back in a little while.'; tone = 'warn'; }
+    else if (c.notice && c.notice.text) { text = c.notice.text; link = c.notice.link || ''; tone = c.notice.tone || 'info'; }
+    if (!text) { return; }
+    var bar = document.createElement(link ? 'a' : 'div');
+    bar.className = 'notice notice-' + (/^(info|good|warn)$/.test(tone) ? tone : 'info');
+    bar.textContent = text;
+    if (link && /^(https?:)?\//.test(link)) { bar.href = link; }
+    document.body.insertBefore(bar, document.body.firstChild.nextSibling);
+  }).catch(function () {});
 })();</script>
 </body>
 </html>

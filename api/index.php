@@ -107,6 +107,7 @@ function require_user(PDO $db): int
     if (!$row) {
         fail(401, 'Your sign-in has expired. Please sign in again.');
     }
+    note_seen($db, (int) $row['user_id']);
     return (int) $row['user_id'];
 }
 
@@ -128,6 +129,9 @@ switch ($action) {
         if (strlen($password) < 8 || strlen($password) > 200) {
             fail(400, 'The password must be 8 characters or more.');
         }
+        if (!settings()['site']['signups_open']) {
+            fail(403, 'New accounts are paused for a while. You can still play without one.');
+        }
         if (too_many_attempts($db)) {
             fail(429, 'Too many tries. Wait 15 minutes and try again.');
         }
@@ -137,7 +141,8 @@ switch ($action) {
         if ($exists->fetch()) {
             fail(409, 'This email already has an account. Sign in instead.');
         }
-        $userId = create_user($db, $email, password_hash($password, PASSWORD_DEFAULT), (string) ($in['name'] ?? ''));
+        $userId = create_user($db, $email, password_hash($password, PASSWORD_DEFAULT), (string) ($in['name'] ?? ''), 'email');
+        count_event($db, 'vyomastra', 'login', 0, 'email_new');
         reply(200, ['token' => start_session($db, $userId), 'email' => $email]);
 
     case 'login':
@@ -153,6 +158,8 @@ switch ($action) {
             note_attempt($db);
             fail(401, 'Wrong email or password.');
         }
+        count_event($db, 'vyomastra', 'login', 0, 'email');
+        note_seen($db, (int) $user['id']);
         reply(200, ['token' => start_session($db, (int) $user['id']), 'email' => $email]);
 
     case 'logout':
@@ -292,6 +299,9 @@ switch ($action) {
         if (is_banned($db, $userId)) {
             fail(403, 'This account cannot post scores.');
         }
+        if (!game_settings($game)['scores_open']) {
+            fail(503, 'The leaderboard is paused for a while. Your progress is still saved.');
+        }
         $run = (string) ($in['run'] ?? '');
         $query = $db->prepare('SELECT started_at FROM games_runs WHERE token_hash = ? AND user_id = ? AND game = ? AND level = ?');
         $query->execute([hash('sha256', $run), $userId, $game, $level]);
@@ -328,9 +338,36 @@ switch ($action) {
 
     case 'event':
         // Anonymous counting: how often something happened today. No account, no address kept.
+        // count_event() drops unknown games and names, so nothing odd is stored.
         $in = body();
-        count_event($db, game_id($in['game'] ?? ''), (string) ($in['name'] ?? ''), (int) ($in['level'] ?? 0), (string) ($in['detail'] ?? ''));
+        if (($in['name'] ?? '') !== 'login') {   // sign-ins are counted by the server only
+            count_event($db, (string) ($in['game'] ?? ''), (string) ($in['name'] ?? ''), (int) ($in['level'] ?? 0), (string) ($in['detail'] ?? ''));
+        }
         reply(200, ['ok' => true]);
+
+    case 'site_config':
+        // What the admin panel has switched on: notices, maintenance and per-game tuning.
+        header('Cache-Control: public, max-age=60');
+        $site = settings()['site'];
+        $games = [];
+        foreach (array_keys(GAMES) as $id) {
+            $one = game_settings($id);
+            $games[$id] = [
+                'status' => (string) $one['status'],
+                'notice' => (string) $one['notice'],
+                'coin_boost' => max(1.0, min(5.0, (float) $one['coin_boost'])),
+                'boost_until' => (int) $one['boost_until'],
+                'continue_cost' => max(1, min(50, (int) $one['continue_cost'])),
+                'continue_lives' => max(1, min(9, (int) $one['continue_lives'])),
+                'scores_open' => (bool) $one['scores_open'],
+            ];
+        }
+        reply(200, [
+            'notice' => $site['notice'] === '' ? null : ['text' => (string) $site['notice'], 'link' => (string) $site['notice_link'], 'tone' => (string) $site['notice_tone']],
+            'maintenance' => ['on' => (bool) $site['maintenance'], 'message' => (string) $site['maintenance_message']],
+            'signups_open' => (bool) $site['signups_open'],
+            'games' => $games,
+        ]);
 
     case 'client_error':
         $in = body();
