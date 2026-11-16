@@ -268,7 +268,7 @@ GAME_FAQ = [
     ("How do I save my progress in Vyomastra?", "Progress saves automatically in your browser. To keep it online and use it on another device, open Account in the game menu and create a free account with an email and password."),
     ("How do I unlock new ships in Vyomastra?", "Open Hangar in the game menu. Bulwark costs 1,200 coins and Wisp costs 20 diamonds. Coins drop from every enemy you destroy; diamonds come from bosses and from clearing a level for the first time."),
     ("Can I play Vyomastra on a phone?", "Yes. On a phone or tablet, drag a finger anywhere on the screen to move the ship; it fires automatically while your finger is down. Tap the pause button at the top to pause."),
-    ("How many levels does Vyomastra have?", "Three levels are playable now: Low Orbit, with the Gatekeeper boss; Rock Belt, an asteroid field with the Crusher boss; and Ice Moon, where pale blue frost shots freeze your ship, with the Frost Manta boss. Eight levels are planned, and each one unlocks when you beat the level before it."),
+    ("How many levels does Vyomastra have?", "Four levels are playable now: Low Orbit, with the Gatekeeper boss; Rock Belt, an asteroid field with the Crusher boss; Ice Moon, where frost shots freeze your ship, with the Frost Manta boss; and Storm Giant, with wind that pushes your ship and lightning to dodge, with the Storm Eye boss. Eight levels are planned, and each one unlocks when you beat the level before it."),
 ]
 
 WEAPONS = [("Blaster", "Blue", "Starting weapon. Balanced speed and fire rate."), ("Rapid", "Green", "Fastest shots and fire rate, low damage per shot."),
@@ -433,7 +433,7 @@ urls = ["/", "/vyomastra/", "/privacy/"]
 
 ## Games
 
-- [Vyomastra]({SITE}/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Three levels are playable (Low Orbit, Rock Belt and Ice Moon) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged. In Ice Moon, frost shots freeze the ship (slower movement and firing) instead of costing a life; a second freeze while frozen costs a life.
+- [Vyomastra]({SITE}/vyomastra/): free vertical space shooter. Five weapons (Blaster, Rapid, Heavy, Wide, Pierce), boss fights, three ships (Arrow, Bulwark, Wisp), paint colours, coins and diamonds, global leaderboard. Plays with touch, mouse, keyboard or gamepad. Four levels are playable (Low Orbit, Rock Belt, Ice Moon and Storm Giant) and eight are planned. In Rock Belt, large asteroids cannot be destroyed and must be dodged. In Ice Moon, frost shots freeze the ship (slower movement and firing) instead of costing a life; a second freeze while frozen costs a life. In Storm Giant, gusts of wind push the ship sideways and lightning strikes a column of the screen about a second after a flickering warning line appears.
 
 ## Facts
 
