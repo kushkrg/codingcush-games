@@ -794,7 +794,8 @@ R`@media (max-width: 600px) {
       samples: S.samples, errMap: S.errMap, cfg: { level: cfg.level, lang: cfg.lang, mode: cfg.mode, amount: cfg.amount },
       label: cfgLabel(), date: new Date()
     };
-    R.valid = S.keys >= 10 && R.acc >= 50;
+    R.tooFast = R.wpm > 300;
+    R.valid = S.keys >= 10 && R.acc >= 50 && !R.tooFast;
     R.rank = rankOf(R.wpm);
     var key = [cfg.level, cfg.level === 'code' ? cfg.lang : '', cfg.mode, cfg.amount].join('|');
     data = load(); data.cfg = cfg; data.pb = data.pb || {}; data.h = data.h || [];
@@ -849,7 +850,7 @@ R`@media (max-width: 600px) {
   function showResult(R) {
     var rank = RANKS[R.rank], next = RANKS[R.rank + 1], h = '';
     var note = rank.line;
-    if (!R.valid) note = '<strong>This run was not saved.</strong> ' + (S.keys < 10 ? 'It was too short to measure.' : 'Accuracy was under 50%. Slow down and aim for correct keys first.');
+    if (!R.valid) note = '<strong>This run was not saved.</strong> ' + (R.tooFast ? 'That speed is beyond human typing, so it does not count.' : S.keys < 10 ? 'It was too short to measure.' : 'Accuracy was under 50%. Slow down and aim for correct keys first.');
     else if (R.challenge) note = R.wpm > R.challenge ? '<strong>Challenge won!</strong> You beat ' + R.challenge + ' WPM by ' + (R.wpm - R.challenge) + '. Send it back and see if they can answer.'
       : R.wpm === R.challenge ? '<strong>A tie at ' + R.challenge + ' WPM.</strong> One more run to settle it?'
       : '<strong>' + (R.challenge - R.wpm) + ' WPM short of the challenge.</strong> Try again, you are close.';
