@@ -16,6 +16,7 @@
                                 <h4>How fast can you type?</h4>
                                 <p>Check your WPM and accuracy in 30 seconds. Four levels, from simple words to real code.</p>
                                 <span class="cc-tt-demo" aria-hidden="true">the quick brown<i></i><em> fox jumps</em></span>
+                                <span class="cc-tt-tags"><span>4 levels</span><span>Speed graph</span><span>Missed keys</span><span>Share card</span></span>
                                 <span class="cc-tt-go">Take the typing test <span aria-hidden="true">→</span></span>
                             </a>
                             <div>
