@@ -1,0 +1,12 @@
+/* Dark-mode fix for the /tools/ pages.
+   Add to the END of /assets/css/cc-redesign-v2.css (then bump its ?v= number).
+   The tool pages set colours inline with var(--cc-ink) / var(--cc-muted), which stay
+   light-theme values in dark mode, so headings and paragraphs were almost invisible. */
+[data-theme=dark] .site-main .cc-wrap > h2{color:#fff!important}
+[data-theme=dark] .site-main .cc-wrap > p{color:#a9bcb6!important}
+[data-theme=dark] .cc-hub-hero p{color:#a9bcb6}
+[data-theme=dark] .cc-hub-faq details p{color:#a9bcb6}
+[data-theme=dark] .site-main .cc-wrap p a{color:#45b8a9}
+[data-theme=dark] .cc-tool label,[data-theme=dark] .cc-tool strong{color:#d9e8e3}
+[data-theme=dark] .cc-tool textarea,[data-theme=dark] .cc-tool input,[data-theme=dark] .cc-tool select{color:#fff;background:#111b18;border-color:#31433a}
+[data-theme=dark] .cc-tool .wc-stat{border-color:#2a3831}

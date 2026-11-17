@@ -1,51 +1,5 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typing Test Online (Free) — Check Your WPM Speed &amp; Accuracy — CodingCush</title>
-<meta name="description" content="Free online typing test with live WPM, accuracy, a speed graph and missed-key analysis. Beginner to advanced levels plus a code typing test. No sign-up.">
-<link rel="canonical" href="https://codingcush.com/typing-test/">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Typing Test — How fast can you type?">
-<meta property="og:description" content="Free online typing test with live WPM, accuracy, a speed graph and missed-key analysis. Beginner to advanced levels plus a code typing test. No sign-up.">
-<meta property="og:url" content="https://codingcush.com/typing-test/">
-<meta property="og:image" content="https://codingcush.com/typing-test/og-typing-test.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://codingcush.com/typing-test/og-typing-test.png">
-<meta name="theme-color" content="#0C1211">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<script>(function(){try{var t=localStorage.getItem('cc-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
-<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "CodingCush Typing Test", "url": "https://codingcush.com/typing-test/", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "description": "Free online typing test with live WPM, accuracy, a speed graph and missed-key analysis. Beginner to advanced levels plus a code typing test. No sign-up."}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this typing test free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is completely free, with no sign-up and no limit on how many tests you take."}}, {"@type": "Question", "name": "Is anything I type sent to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. The test runs entirely in your browser. Your results and personal best are saved only on your own device."}}, {"@type": "Question", "name": "What is the difference between WPM and raw WPM?", "acceptedAnswer": {"@type": "Answer", "text": "Raw WPM counts every character you type. WPM counts only the correct ones, so it is the number that reflects your real, usable speed."}}, {"@type": "Question", "name": "Can I take the test on my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Tap the text box to open your keyboard. Phone typing speeds are usually lower than on a physical keyboard, so compare phone results with phone results."}}, {"@type": "Question", "name": "How do I share my result?", "acceptedAnswer": {"@type": "Answer", "text": "After each test you get a result card. Download it as an image, copy it, or share it straight to WhatsApp, X, LinkedIn, Facebook or Telegram. The link lets your friends try to beat your score."}}, {"@type": "Question", "name": "Why is there a Code level?", "acceptedAnswer": {"@type": "Answer", "text": "Programmers type brackets, semicolons and symbols far more than regular writers do. The Code level lets you practise those keys with real snippets."}}]}]</script>
-<script>
-window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
-(function(){var c=null;try{c=JSON.parse(localStorage.getItem('cc_cookie_consent')||'null')}catch(e){}
-var a=c&&c.analytics?'granted':'denied',d=c&&c.advertising?'granted':'denied';
-gtag('consent','default',{ad_storage:d,ad_user_data:d,ad_personalization:d,analytics_storage:a,personalization_storage:d});
-gtag('js',new Date());gtag('config','G-KQ5RWVVBZY');})();
-</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KQ5RWVVBZY"></script>
-<link rel="icon" href="https://codingcush.com/favicon.ico">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this typing test free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is completely free, with no sign-up and no limit on how many tests you take."}}, {"@type": "Question", "name": "Is anything I type sent to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. The test runs entirely in your browser. Your results and personal best are saved only on your own device."}}, {"@type": "Question", "name": "What is the difference between WPM and raw WPM?", "acceptedAnswer": {"@type": "Answer", "text": "Raw WPM counts every character you type. WPM counts only the correct ones, so it is the number that reflects your real, usable speed."}}, {"@type": "Question", "name": "Can I take the test on my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Tap the text box to open your keyboard. Phone typing speeds are usually lower than on a physical keyboard, so compare phone results with phone results."}}, {"@type": "Question", "name": "How do I share my result?", "acceptedAnswer": {"@type": "Answer", "text": "After each test you get a result card. Download it as an image, copy it, or share it straight to WhatsApp, X, LinkedIn, Facebook or Telegram. The link lets your friends try to beat your score."}}, {"@type": "Question", "name": "Why is there a Code level?", "acceptedAnswer": {"@type": "Answer", "text": "Programmers type brackets, semicolons and symbols far more than regular writers do. The Code level lets you practise those keys with real snippets."}}]}</script>
 <style>
-html{background:#faf9f6}html[data-theme="dark"]{background:#0c1211}
-body{margin:0;font-family:"Inter",-apple-system,"Helvetica Neue",sans-serif}
-.sh{display:flex;align-items:center;gap:20px;max-width:980px;margin:0 auto;padding:16px}
-.sh a{color:#1f2a2e;text-decoration:none;font-weight:600;font-size:15px}
-.sh .logo{font:700 22px "Sora",sans-serif;letter-spacing:-.02em;margin-right:auto}
-.sh .logo span{color:#0f766e}
-.sh button{min-height:40px;padding:8px 12px;border:1px solid #e5e1d8;border-radius:4px;background:transparent;color:inherit;font:600 14px "Inter",sans-serif;cursor:pointer}
-.sf{max-width:980px;margin:0 auto;padding:22px 16px 36px;border-top:1px solid #e5e1d8;color:#5f6e73;font-size:14px;display:flex;flex-wrap:wrap;gap:8px 18px}
-.sf a{color:inherit}
-html[data-theme="dark"] .sh a,html[data-theme="dark"] .sh button{color:#fff}
-html[data-theme="dark"] .sh .logo span{color:#45b8a9}
-html[data-theme="dark"] .sh button,html[data-theme="dark"] .sf{border-color:#2a3831}
-html[data-theme="dark"] .sf{color:#8a9e98}
-@media (max-width:600px){.sh .hide{display:none}}
-
 #typing-test{
   --bg:#faf9f6;--surface:#fff;--surface-2:#f4f2ec;--ink:#1f2a2e;--text:#33454c;--muted:#48565c;--faint:#5f6e73;
   --line:#e5e1d8;--primary:#0f766e;--primary-dark:#115e59;--accent:#0f766e;--soft:#e3f2ef;
@@ -253,16 +207,6 @@ html[data-theme="dark"] #typing-test{
   #typing-test .tt-caret{animation:none}
 }
 </style>
-</head>
-<body>
-<header class="sh">
-  <a class="logo" href="https://codingcush.com/">Coding<span>Cush</span></a>
-  <a class="hide" href="https://codingcush.com/tools/">Free Tools</a>
-  <a class="hide" href="https://codingcush.com/students">Students</a>
-  <a class="hide" href="https://www.youtube.com/@CodingCush">YouTube</a>
-  <button type="button" id="shTheme" aria-label="Switch between light and dark theme">Light / dark</button>
-</header>
-<main>
 <div id="typing-test">
 
   <section class="tt-hero">
@@ -388,10 +332,6 @@ html[data-theme="dark"] #typing-test{
     </div>
   </section>
 </div>
-
-</main>
-<footer class="sf"><span>© 2026 CodingCush</span><a href="https://codingcush.com/">Home</a><a href="https://codingcush.com/tools/">Free Tools</a><a href="https://codingcush.com/privacy-policy">Privacy Policy</a></footer>
-<script>document.getElementById('shTheme').addEventListener('click',function(){var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('cc-theme',t)}catch(e){}});</script>
 <script>
 (function () {
   'use strict';
@@ -1125,5 +1065,3 @@ R`@media (max-width: 600px) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (S && !S.started) placeCaret(); });
 })();
 </script>
-</body>
-</html>
