@@ -535,6 +535,94 @@ PRIVACY_BODY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games<
     "What CodingCush Games stores when you play as a guest or with an account, how Google and Facebook sign-in is used, and how to delete your account and data.",
     PRIVACY_BODY, [ORG, {"@type": "WebPage", "@id": SITE + "/privacy/", "url": SITE + "/privacy/", "name": "Privacy policy", "isPartOf": {"@id": SITE + "/#website"}, "dateModified": TODAY}]))
 
+
+# ---------------------------------------------------------------- Vyomastra Mini (Chrome extension)
+MINI_STORE = ""  # Chrome Web Store link, filled in once the listing is approved
+MINI_BTN = (f'<a class="btn" href="{MINI_STORE}" rel="noopener">Add to Chrome, it\'s free</a>' if MINI_STORE
+            else '<span class="btn" aria-disabled="true">Coming soon to the Chrome Web Store</span>')
+MINI_SHOTS = [("Gameplay above the moon with power-ups", 1), ("Boss fight against the Hive Queen", 2), ("Weapons at full power in Scrap Sea", 3), ("Main menu with the daily challenge", 4), ("Hangar with three ships", 5)]
+mini_body = f"""
+<p class="crumbs"><a href="/">Games</a> › <a href="/vyomastra/">Vyomastra</a> › Vyomastra Mini</p>
+<div class="hero">
+  <div>
+    <span class="tag">Chrome extension · Free</span>
+    <h1>Vyomastra Mini</h1>
+    <p class="lead">A pocket version of Vyomastra that lives in your Chrome toolbar. Click the icon and you are flying in a second: blast enemy waves, grab power-ups and beat 8 bosses. It works offline, needs no account and shows no ads.</p>
+    {MINI_BTN}<a class="btn ghost" href="/vyomastra/play/">▶ Play the full game</a>
+  </div>
+  <div class="shot" style="aspect-ratio:1280/800"><img src="/assets/vyomastra-mini-1.webp" width="1280" height="800" alt="Vyomastra Mini gameplay: a blue fighter firing at enemies above a moon" fetchpriority="high"></div>
+</div>
+
+<section aria-labelledby="mini-shots-h">
+  <h2 id="mini-shots-h">Screenshots</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(400px,100%),1fr))">{"".join(f'<img src="/assets/vyomastra-mini-{n}.webp" width="1280" height="800" alt="{a}" loading="lazy" style="border-radius:14px;border:1px solid var(--line)">' for a, n in MINI_SHOTS[1:])}</div>
+</section>
+
+<section class="cols" aria-label="Install and play">
+  <div class="panel">
+    <h3>How to install</h3>
+    <ol class="steps">
+      <li>Open Vyomastra Mini on the Chrome Web Store and choose <b>Add to Chrome</b>.</li>
+      <li>Click the puzzle icon in the toolbar and <b>pin</b> Vyomastra Mini so it is always one click away.</li>
+      <li>Click the ship icon (or press <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>) to play.</li>
+    </ol>
+  </div>
+  <div class="panel">
+    <h3>How to play</h3>
+    <ol class="steps">
+      <li><b>Move</b> with the arrow keys or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>, or drag with the mouse. Your ship fires on its own.</li>
+      <li>Collect <b>P</b> for more guns, <b>S</b> for a shield, <b>M</b> for homing missiles and <b>+</b> for an extra life.</li>
+      <li>Survive each sector, then beat its boss. <kbd>P</kbd> pauses, <kbd>M</kbd> mutes, and the expand button opens a bigger window in a tab.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="prose" aria-labelledby="mini-faq-h">
+  <h2 id="mini-faq-h">Questions</h2>
+  <details><summary>Is it free?</summary><p>Yes. There are no ads, no purchases and no account.</p></details>
+  <details><summary>What does it need access to?</summary><p>Only Chrome's storage, to keep your best score, unlocked ships and settings on your computer. It cannot read the websites you visit.</p></details>
+  <details><summary>If I close the popup, do I lose my run?</summary><p>No. The game saves your run as you play, and <b>Continue</b> on the menu picks it up from the start of the sector you were in.</p></details>
+  <details><summary>How is it different from the full Vyomastra?</summary><p>Vyomastra Mini is a quick endless mode made for short breaks. The <a href="/vyomastra/">full game</a> has eight designed missions, five weapons, paints, cloud saves and a global leaderboard.</p></details>
+  <p>Privacy: <a href="/vyomastra-mini/privacy/">Vyomastra Mini privacy policy</a>.</p>
+</section>
+"""
+(OUT / "vyomastra-mini").mkdir(parents=True, exist_ok=True)
+(OUT / "vyomastra-mini" / "index.html").write_text(page("/vyomastra-mini/", "Vyomastra Mini: free space shooter Chrome extension",
+    "Vyomastra Mini is a free arcade space shooter that lives in your Chrome toolbar. Blast enemy waves, grab power-ups and beat 8 bosses. Works offline, no account, no ads.",
+    mini_body, [ORG, {"@type": "SoftwareApplication", "name": "Vyomastra Mini", "applicationCategory": "GameApplication", "operatingSystem": "Chrome",
+    "url": SITE + "/vyomastra-mini/", "image": SITE + "/assets/vyomastra-mini-1.webp", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "publisher": {"@id": "https://codingcush.com/#org"}}]))
+
+MINI_PRIVACY = """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Games</a> / <a href="/vyomastra-mini/">Vyomastra Mini</a> / Privacy policy</nav>
+<section class="prose" aria-labelledby="mpp-h">
+  <h1 id="mpp-h">Vyomastra Mini privacy policy</h1>
+  <p class="lead">Vyomastra Mini does not collect, send or share any personal data. Last updated __TODAY__.</p>
+  <p>Vyomastra Mini is a free Chrome extension made by CodingCush. This policy covers only the extension. The website games.codingcush.com has its own <a href="/privacy/">privacy policy</a>.</p>
+  <h2>What the extension stores</h2>
+  <p>The extension saves the following <b>only on your own computer</b>, in Chrome's extension storage:</p>
+  <ul>
+    <li>Your best score and your best score in today's daily challenge.</li>
+    <li>Simple totals: runs played, enemies destroyed and bosses beaten.</li>
+    <li>Your chosen ship and your settings (sound, music, auto-fire, screen shake).</li>
+    <li>While you play, a snapshot of the current run (score, sector, lives and power level), so you can continue after the popup closes. It is removed when the run ends or Chrome closes.</li>
+  </ul>
+  <p>None of this is sent to us or to anyone else. You can erase it any time with <b>Settings → Reset progress</b>, or by removing the extension.</p>
+  <h2>What the extension does not do</h2>
+  <ul>
+    <li>It does not collect your name, email, location, browsing history or any other personal information.</li>
+    <li>It does not read or change the websites you visit. Its only permission is <b>storage</b>.</li>
+    <li>It has no ads, no analytics, no tracking and no remote code. All game files are inside the extension and it works offline.</li>
+    <li>It does not sell or transfer any data, because it has none to give.</li>
+  </ul>
+  <h2>Links</h2>
+  <p>The menu has a link to the full Vyomastra game on games.codingcush.com. It opens only if you click it, and that site's <a href="/privacy/">privacy policy</a> then applies.</p>
+  <h2>Changes and contact</h2>
+  <p>If this policy changes, the date at the top changes with it. Questions: use the <a href="https://codingcush.com/contact">CodingCush contact page</a>.</p>
+</section>""".replace("__TODAY__", date.today().strftime("%-d %B %Y"))
+(OUT / "vyomastra-mini" / "privacy").mkdir(parents=True, exist_ok=True)
+(OUT / "vyomastra-mini" / "privacy" / "index.html").write_text(page("/vyomastra-mini/privacy/", "Privacy policy | Vyomastra Mini Chrome extension",
+    "Vyomastra Mini stores your scores and settings only on your own computer. It collects no personal data, has no tracking and its only permission is storage.",
+    MINI_PRIVACY, [ORG, {"@type": "WebPage", "@id": SITE + "/vyomastra-mini/privacy/", "url": SITE + "/vyomastra-mini/privacy/", "name": "Vyomastra Mini privacy policy", "dateModified": TODAY}]))
+
 (OUT / "admin").mkdir(parents=True, exist_ok=True)
 # The admin tools now live in the CodingCush admin panel (Admin > Games); this address points there.
 ADMIN_HOME = "https://codingcush.com/admin/games"
@@ -551,7 +639,7 @@ ADMIN_HOME = "https://codingcush.com/admin/games"
     "background_color": "#070b1a", "theme_color": "#070b1a",
     "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=1))
 (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\n\nSitemap: {SITE}/sitemap.xml\n")
-urls = ["/", "/vyomastra/", "/privacy/"]
+urls = ["/", "/vyomastra/", "/privacy/", "/vyomastra-mini/", "/vyomastra-mini/privacy/"]
 (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod></url>\n" for u in urls) + "</urlset>\n")
 (OUT / "llms.txt").write_text(f"""# CodingCush Games
