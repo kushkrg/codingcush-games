@@ -16,6 +16,14 @@ const GAMES = [
         'max_scores' => [1 => 40000, 2 => 50000, 3 => 100000, 4 => 90000, 5 => 130000, 6 => 110000, 7 => 150000, 8 => 200000],
         'min_seconds' => 30,
     ],
+    // Devbhoomi Drive keeps a travel log in games_saves (time driven, places reached). It has
+    // no score board yet; the one "level" is the whole climb, should one be added: the score
+    // would be 36000 minus the seconds taken, and 34 km cannot be driven in under 10 minutes.
+    'devbhoomi' => [
+        'levels' => 1,
+        'max_scores' => [1 => 35400],
+        'min_seconds' => 600,
+    ],
 ];
 const RUN_HOURS = 6;             // a run token is good for this long
 const BACKUP_KEEP = 14;          // daily database copies kept
